@@ -4,7 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request) {
   // Rotas que NÃO precisam de autenticação
-  const publicRoutes = ["/auth/login", "/auth/register", "/error", "/"]; // Exemplos de rotas públicas
+  const publicRoutes = ["/login", "/register", "/error", "/"]; // Exemplos de rotas públicas
 
   // Se a rota for uma das públicas, não precisa passar pela verificação de autenticação
   if (

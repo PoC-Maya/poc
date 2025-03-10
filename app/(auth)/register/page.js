@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { Form, TextField } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PlaceHolder from "@/components/general/PlaceHolder";
+import { CircleArrowLeft, UserCheck2 } from "lucide-react";
+import { HeaderSectionForPage } from "@/components/general/HeaderPage";
 
 export default function RegisterPage() {
   const [errors, setErrors] = useState({});
@@ -52,9 +55,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="p-4 container mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Criar Conta</h1>
-      <Form id="registerForm" action={handleSubmit} className="max-w-md mx-auto">
+    <div className="mx-auto flex w-full flex-col justify-start py-6 px-6 relative">
+      <Link href="/"><CircleArrowLeft className="absolute top-4 left-4 w-10 h-10 text-black" /></Link>
+      <PlaceHolder
+        title="Sign up and find your next trip"
+        icon={<UserCheck2 className="w-10 h-10 text-black" />}
+      />
+
+      <Form id="registerForm" action={handleSubmit} className="w-full mx-auto">
         <TextField
           label="Nome Completo"
           name="fullName"
@@ -76,15 +84,6 @@ export default function RegisterPage() {
         />
 
         <TextField
-          label="Telefone"
-          name="phone"
-          type="tel"
-          error={errors.phone}
-          placeholder="(00) 00000-0000"
-          onChange={handleFieldChange}
-        />
-
-        <TextField
           label="Senha"
           name="password"
           type="password"
@@ -94,31 +93,31 @@ export default function RegisterPage() {
           onChange={handleFieldChange}
         />
 
-        <TextField
-          label="Confirmar Senha"
-          name="confirmPassword"
-          type="password"
-          error={errors.confirmPassword}
-          required
-          placeholder="Confirme sua senha"
-          onChange={handleFieldChange}
-        />
-
         <Button
           type="submit"
-          className="mt-4 w-full btn-primary"
+          className="mt-4 w-full btn-primary uppercase text-lg"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Processando..." : "Criar Conta"}
         </Button>
-
-        <div className="text-center mt-4">
-          Já tem uma conta?{" "}
-          <Link href="/auth/login" className="text-blue-500 hover:underline">
-            Faça login
-          </Link>
-        </div>
       </Form>
+
+      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border my-10">
+        <span className="relative z-10 bg-background px-2 text-muted-foreground">
+          Already have an account?{" "}
+        </span>
+      </div>
+
+      <div className="text-center">
+        <Link href={"/login"}>
+          <Button
+            type="submit"
+            className="w-full btn-secondary uppercase text-lg"
+          >
+            Login
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

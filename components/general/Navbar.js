@@ -10,9 +10,7 @@ import PlaceHolder from "./PlaceHolder";
 import LogoutButton from "./LogoutButton";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -59,10 +57,10 @@ const Navbar = ({ user }) => {
                         <Button
                           onClick={() => {
                             handleCloseDrawer();
-                            router.push("/auth/login");
+                            router.push("/login");
                             router.refresh();
                           }}
-                          className="bg-[#00A884] hover:bg-[#008f70] w-full"
+                          className="bg-[#00A884] hover:bg-[#008f70] w-full mt-4 btn-primary"
                         >
                           start the adventure
                         </Button>
