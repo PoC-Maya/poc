@@ -1,28 +1,20 @@
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+// lib/hooks/useUser.js
+import { cache } from 'react';
+import { createClient } from "@/lib/supabase/server";
 
-export function useUserProfile(userId) {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchProfile() {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Erro ao buscar perfil:", error);
-      } else {
-        setProfile(data);
-      }
-      setLoading(false);
-    }
-
-    if (userId) fetchProfile();
-  }, [userId]);
-
-  return { profile, loading };
-}
+export const getUser = cache(async () => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  
+  if (error || !data?.user) {
+    return { user: null, profile: null };
+  }
+  
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", data.user.id)
+    .single();
+    
+  return { user: data.user, profile: profileData };
+});

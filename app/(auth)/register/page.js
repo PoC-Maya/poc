@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { registerUser } from "./action";
 import { toast } from "sonner";
-import { Form, TextField } from "@/components/ui/form";
+import { Form, TextField } from "@/components/ui/form/index";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PlaceHolder from "@/components/general/PlaceHolder";
@@ -95,7 +95,7 @@ export default function RegisterPage() {
 
         <Button
           type="submit"
-          className="mt-4 w-full btn-primary uppercase text-lg"
+          className="btn btn-primary"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Processando..." : "Criar Conta"}
@@ -112,7 +112,7 @@ export default function RegisterPage() {
         <Link href={"/login"}>
           <Button
             type="submit"
-            className="w-full btn-secondary uppercase text-lg"
+            className="btn btn-secondary"
           >
             Login
           </Button>

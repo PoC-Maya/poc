@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CircleUserRound, UserCheck } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
 import PlaceHolder from "./PlaceHolder";
 import LogoutButton from "./LogoutButton";
@@ -17,7 +17,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-const Navbar = ({ user }) => {
+const Navbar = ({ user, profile }) => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,14 +60,14 @@ const Navbar = ({ user }) => {
                             router.push("/login");
                             router.refresh();
                           }}
-                          className="bg-[#00A884] hover:bg-[#008f70] w-full mt-4 btn-primary"
+                          className="btn btn-primary"
                         >
                           start the adventure
                         </Button>
                       }
                     />
                   )}
-                  {user && <TouristMenu />}
+                  {user && <TouristMenu profile={profile} />}
                   {/* <ProviderMenu /> */}
                   <Separator className="" />
                   <InstitutionalMenu />
@@ -82,10 +82,13 @@ const Navbar = ({ user }) => {
   );
 };
 
-export const TouristMenu = () => {
+export const TouristMenu = ({ profile}) => {
   return (
     <Card className="mb-6 border-none shadow-none">
-      <CardContent className="p-6 flex flex-col items-start justify-center">
+      <CardHeader className="flex items-start justify-between">
+        <span className="text-lg font-semibold px-3">Hello, {profile?.full_name}.</span>
+      </CardHeader>
+      <CardContent className="flex flex-col items-start justify-center">
         <ul className="space-y-2 text-gray-700">
           <li>
             <Link href="#" className="block p-3 hover:bg-gray-100 rounded-lg">
@@ -111,7 +114,7 @@ export const TouristMenu = () => {
             </Link>
           </li>
           <li>
-            <Link href="#" className="block p-3 hover:bg-gray-100 rounded-lg">
+            <Link href="/profile" className="block p-3 hover:bg-gray-100 rounded-lg">
               Profile
             </Link>
           </li>

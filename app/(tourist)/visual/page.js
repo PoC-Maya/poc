@@ -66,26 +66,28 @@ const DesignGuide = () => {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Botões</h2>
           <div className="flex flex-col gap-4">
-            <Button className="btn-secondary text-white w-full">
-              Busca cosas que hacer
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#00A884] text-[#00A884] hover:bg-[#e6f7f3]"
-            >
-              Ver disponibilidad
-            </Button>
-            <Button variant="link" className="text-[#00A884] underline">
-              Ver todas
-            </Button>
+            <Button className="btn btn-primary">btn btn-primary</Button>
+            <Button className="btn btn-secondary">btn btn-secondary</Button>
+            <Button className="btn btn-ghost">btn btn-ghost</Button>
+            <Button className="btn btn-outline">btn btn-outline</Button>
+
             <div className="flex gap-2">
-              <Button variant="ghost" className="rounded-full p-2 h-10 w-10">
+              <Button variant="default" className="rounded-full p-2 h-10 w-10">
                 <ChevronLeft className="h-6 w-6" />
               </Button>
-              <Button variant="ghost" className="rounded-full p-2 h-10 w-10">
+              <Button variant="destructive" className="rounded-full p-2 h-10 w-10">
                 <Heart className="h-6 w-6" />
               </Button>
+              <Button variant="outline" className="rounded-full p-2 h-10 w-10">
+                <Share className="h-6 w-6" />
+              </Button>
+              <Button variant="secondary" className="rounded-full p-2 h-10 w-10">
+                <Share className="h-6 w-6" />
+              </Button>
               <Button variant="ghost" className="rounded-full p-2 h-10 w-10">
+                <Share className="h-6 w-6" />
+              </Button>
+              <Button variant="link" className="rounded-full p-2 h-10 w-10">
                 <Share className="h-6 w-6" />
               </Button>
             </div>
@@ -141,7 +143,7 @@ const DesignGuide = () => {
                 Es hora de quitarle el polvo a las maletas y empezar a
                 planificar su próxima aventura
               </p>
-              <Button className="bg-[#00A884] hover:bg-[#008f70] w-full">
+              <Button className="btn btn-primary">
                 Busca cosas que hacer
               </Button>
             </CardContent>

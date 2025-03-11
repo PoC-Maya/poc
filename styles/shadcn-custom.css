@@ -1,22 +1,23 @@
 /* shadcn-custom */
-.btn-primary {
-  background-color: #00a884;
-  color: #ffffff;
+.btn {
   font-weight: 600;
   border-radius: 0.375rem;
   padding: 1.5rem 0.75rem;
   width: 100%;
   transition: background-color 0.3s ease;
   cursor: pointer;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+.btn-primary {
+  background-color: #00a884;
+  color: #ffffff;
 }
 .btn-primary:hover {
   background-color: #008f70;
 }
 .btn-secondary {
-  padding: 1.5rem 0.75rem;
   background-color: #000000;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 .btn-secondary:hover {
   background-color: #008f70;
@@ -26,8 +27,6 @@
 .btn-ghost {
   background-color: transparent;
   color: #000000;
-  padding: 0.5rem;
-  border-radius: 9999px;
 }
 .btn-ghost:hover {
   background-color: rgba(0, 0, 0, 0.05);
@@ -37,7 +36,6 @@
   background-color: transparent;
   color: #00a884;
   border: 1px solid #00a884;
-  font-weight: 600;
 }
 .btn-outline:hover {
   background-color: #e6f7f3;

@@ -3,6 +3,8 @@ import { Poppins } from "next/font/google";
 import "@/app/globals.css";
 import "@/styles/shadcn-custom.css";
 import { Navbar } from "@/components/general/Navbar";
+import { getUser } from "@/hooks/useUserProfile";
+import { MenuWrapper } from "@/components/layout/MenuWrapper";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -15,29 +17,19 @@ export const metadata = {
   description: "Action Supabase POC",
 };
 
-import { createClient } from "@/lib/supabase/server";
-
 export default async function TouristLayout({ children }) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    console.log("User not logged in");
-  } else {
-    console.log("User logged in", data.user);
-  }
+  const { user, profile } = await getUser();
 
   return (
-    // <AuthProvider initialUser={initialUser}>
     <html lang="en">
       <body
         className={`${poppins.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Navbar user={data?.user ? data.user : null} />
+        <MenuWrapper user={user} profile={profile} />
         {children}
         <Toaster />
       </body>
     </html>
-    // </AuthProvider>
   );
 }

@@ -25,11 +25,7 @@ const LogoutButton = () => {
   return (
     <div className="flex flex-col p-2">
       <Separator className="mb-2" />
-      <Button
-        variant="btn-secondary"
-        onClick={handleLogout}
-        className="bg-[#00A884] hover:bg-[#008f70] w-full"
-      >
+      <Button className="btn btn-outline" onClick={handleLogout}>
         Logout
       </Button>
     </div>
