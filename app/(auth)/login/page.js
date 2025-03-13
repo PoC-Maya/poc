@@ -55,8 +55,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container max-w-md">
-      <div className="flex flex-col space-y-6 px-6 py-6  h-screen">
+    <div className="container">
+      <div className="flex flex-col space-y-6 px-6 py-6 m-auto max-w-lg  h-screen">
         <PlaceHolder
           title={"Signin"}
           message={"Welcome back!"}

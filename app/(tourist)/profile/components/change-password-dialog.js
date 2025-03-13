@@ -48,7 +48,7 @@ export function ChangePasswordDialog({ open, setOpen }) {
       });
 
       if (signInError) {
-        throw new Error("Senha atual incorreta.");
+        throw new Error("Current password is incorrect.");
       }
 
       // Agora atualizamos a senha
@@ -58,12 +58,12 @@ export function ChangePasswordDialog({ open, setOpen }) {
 
       if (error) throw error;
 
-      toast.success("Sua senha foi alterada com sucesso.");
+      toast.success("Your password has been updated successfully.");
 
       form.reset();
       setOpen(false);
     } catch (error) {
-      toast.error("Ocorreu um erro ao alterar sua senha.");  
+      toast.error("Something wrong happened at update your password.");  
     } finally {
       setIsLoading(false);
     }
@@ -73,9 +73,9 @@ export function ChangePasswordDialog({ open, setOpen }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Alterar senha</DialogTitle>
+          <DialogTitle>Change your password</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para atualizar sua senha.
+            Fullfill the form below to change your password.
           </DialogDescription>
         </DialogHeader>
 
@@ -86,11 +86,11 @@ export function ChangePasswordDialog({ open, setOpen }) {
               name="currentPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha atual</FormLabel>
+                  <FormLabel>Current password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Digite sua senha atual"
+                      placeholder="Type your current password"
                       {...field}
                     />
                   </FormControl>
@@ -104,11 +104,11 @@ export function ChangePasswordDialog({ open, setOpen }) {
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nova senha</FormLabel>
+                  <FormLabel>New password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Digite sua nova senha"
+                      placeholder="Type your new password"
                       {...field}
                     />
                   </FormControl>
@@ -122,11 +122,11 @@ export function ChangePasswordDialog({ open, setOpen }) {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirmar nova senha</FormLabel>
+                  <FormLabel>Confirm new password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Digite novamente sua nova senha"
+                      placeholder="Type your new password again"
                       {...field}
                     />
                   </FormControl>
@@ -144,7 +144,7 @@ export function ChangePasswordDialog({ open, setOpen }) {
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando..." : "Salvar"}
+                {isLoading ? "Loading..." : "Update password"}
               </Button>
             </DialogFooter>
           </form>

@@ -14,7 +14,7 @@ export function ChangePasswordButton() {
         className="w-full" 
         onClick={() => setOpen(true)}
       >
-        Alterar senha
+        Change your password
       </Button>
       <ChangePasswordDialog open={open} setOpen={setOpen} />
     </>

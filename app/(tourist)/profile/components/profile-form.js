@@ -1,100 +1,84 @@
-// app/(protected)/profile/profile-form.js
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useActionState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Form, TextField, TextareaField } from "@/components/ui/form/index";
+import { LoadingButton } from "@/components/ui/form/loading-button";
 import { updateProfile } from "../action";
 
 export function ProfileForm({ userProfile }) {
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFieldChange = (e) => {
-    const { name } = e.target;
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
+  const [state, formAction] = useActionState(updateProfile, {
+    success: false,
+    errors: {},
+  });
 
-  async function handleSubmit(formData) {
-    setErrors({});
-    setIsSubmitting(true);
-
-    try {
-      const result = await updateProfile(formData);
-      console.log("Result:", result);
-      if (result.success) {
+  useEffect(() => {
+    if (state && state !== "pending") {
+      setIsSubmitting(false);
+      if (state.success) {
         toast.success("Suas informações foram atualizadas com sucesso.");
         router.refresh();
-      } else {
-        setErrors(result.errors || {});
-        if (result.errors?._form) {
-          toast.error(result.errors._form);
-        } else {
-          toast.error("Verifique os erros no formulário");
-        }
+      } else if (state.errors?._form) {
+        toast.error(state.errors._form);
       }
-    } catch (error) {
-      toast.error("Ocorreu um erro ao atualizar suas informações.");
-    } finally {
-      setIsSubmitting(false);
     }
-  }
+  }, [state, router]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    document.getElementById("updateProfileForm").requestSubmit();
+  };
+
+  const isLoading = isSubmitting || state === "pending";
 
   return (
-    <Form
-      id="updateProfileForm"
-      action={handleSubmit}
+    <Form 
+      id="updateProfileForm" 
+      action={formAction}  // Voltamos para formAction aqui
       className="w-full mx-auto"
     >
       <TextField
-        label="Full Name"
+        label="Nome Completo"
         name="fullName"
         type="text"
-        error={errors.fullName}
+        error={state.errors?.fullName}
         required
         placeholder="Seu nome completo"
-        onChange={handleFieldChange}
         defaultValue={userProfile?.full_name}
       />
 
       <TextField
-        label="Cellphone"
+        label="Telefone"
         name="phone"
         type="phone"
-        error={errors.phone}
+        error={state.errors?.phone}
         required
         placeholder="(999) 9999-9999"
-        onChange={handleFieldChange}
         defaultValue={userProfile?.phone}
       />
 
       <TextareaField
-        label="Talk about yourself"
+        label="Sobre você"
         name="bio"
-        error={errors.bio}
-        required
+        error={state.errors?.bio}
         rows={8}
-        placeholder="Speak about yourself in 100 characters or less"
-        onChange={handleFieldChange}
+        placeholder="Fale sobre você em até 100 caracteres"
         defaultValue={userProfile?.bio}
       />
 
-      <Button
+      <LoadingButton
         type="submit"
-        className="mt-4 w-full btn-primary uppercase text-lg"
-        disabled={isSubmitting}
+        className="btn btn-primary"
+        loading={isLoading}
+        onClick={handleSubmit}  // Adicionamos o onClick aqui
       >
-        {isSubmitting ? "Loading..." : "Save changes"}
-      </Button>
+        Salvar alterações
+      </LoadingButton>
     </Form>
   );
 }
