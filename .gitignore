@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+# Arquivo de metadados de actions (apenas para desenvolvimento)
+app/actions/index.js
+/dev
 
 # next.js
 /.next/

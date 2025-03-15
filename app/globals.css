@@ -2,7 +2,7 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
+
 
 @theme inline {
   --color-background: var(--background);
@@ -127,4 +127,53 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+.container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 765px) {
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+
+/* Customização do react-datepicker */
+.react-datepicker {
+  font-family: 'Poppins', sans-serif !important;
+  border-color: var(--border) !important;
+  background-color: var(--background) !important;
+}
+
+.react-datepicker__header {
+  background-color: var(--background-secondary) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: var(--primary-light) !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--text-muted) !important;
+}
+
+.react-datepicker__current-month {
+  color: var(--text) !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--text) !important;
+}
+
+.react-datepicker__day--disabled {
+  color: var(--text-light) !important;
 }
