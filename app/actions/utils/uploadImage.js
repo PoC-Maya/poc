@@ -1,84 +1,60 @@
 'use server'
 
-/**
- * @description Enviar imagem (genérico)
- * @category utils
- * @inputModel {
-  file: [File],
-  folder: 'experiences', // 'experiences', 'guides', 'blog', etc.
-  id: 'exp_123', // ID relacionado
-  type: 'cover', // 'cover', 'gallery', 'profile', etc.
-  metadata: {
-    altText: 'Texto alternativo',
-    caption: 'Legenda da imagem'
-  }
-}
- */
+import { v2 as cloudinary } from 'cloudinary';
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
-
-// Schema para validação
-const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-export async function uploadImage(prevState, formData) {
+/**
+ * Uploads an image to Cloudinary
+ * @param {File} file - The file to upload
+ * @param {string} folder - The folder in Cloudinary to upload to
+ * @returns {Promise<string>} - The URL of the uploaded image
+ */
+export async function uploadImage(file, folder = 'general') {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
-    // Extrair dados do FormData
-    const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
-
-    // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
-
-    // Se houver erro de validação, retorna imediatamente com os erros
-    if (!validation.success) {
-      return {
-        success: false,
-        errors: validation.error.flatten().fieldErrors,
-      };
+    if (!file || file.size === 0) {
+      throw new Error('No file provided');
     }
-
-    // Dados validados
-    const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
     
-    return { 
-      success: true,
-      message: "uploadImage executado com sucesso",
-      // Dados adicionais que você queira retornar
-    };
-
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Create a unique filename
+    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    
+    // Upload to Cloudinary
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folder,
+          public_id: filename.split('.')[0], // Remove file extension for public_id
+          resource_type: 'auto', // Auto-detect resource type
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            reject(new Error('Failed to upload image'));
+          } else {
+            resolve(result.secure_url);
+          }
+        }
+      );
+      
+      // Write buffer to stream
+      const Readable = require('stream').Readable;
+      const readableStream = new Readable();
+      readableStream.push(buffer);
+      readableStream.push(null);
+      readableStream.pipe(uploadStream);
+    });
   } catch (error) {
-    console.error("uploadImage error:", error);
-    return {
-      success: false,
-      errors: {
-        _form: "Erro ao executar uploadImage. Tente novamente.",
-      },
-    };
+    console.error('Error in uploadImage:', error);
+    throw new Error('Failed to upload image: ' + error.message);
   }
 }

@@ -309,7 +309,7 @@ export default function CotacoesPage() {
           <div className="space-y-4">
             {conversasExibidas.length > 0 ? (
               conversasExibidas.map((conversa) => (
-                <Link href={`/panel/cotacoes/${conversa.id}`} key={conversa.id}>
+                <Link href={`/panel/cotacoes/${conversa.id}`} key={conversa.id} className="block">
                   <ConversaItem conversa={conversa} />
                 </Link>
               ))

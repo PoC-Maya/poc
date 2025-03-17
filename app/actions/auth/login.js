@@ -1,77 +1,165 @@
-'use server'
+"use server";
 
 /**
- * @description Autenticar usuário
+ * @description Login de usuário
  * @category auth
  * @inputModel {
-  email: 'usuario@exemplo.com',
-  password: 'senha123'
+  "email": "usuario@exemplo.com",
+  "password": "senha123"
 }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
+import { createServerClient } from "@supabase/ssr";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
-// Schema para validação
+// Schema for validation
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(1, "Senha é obrigatória"),
 });
 
 export async function login(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
+    // Create Supabase client
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name, value, options) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name, options) {
+            cookieStore.set({ name, value: "", ...options });
+          },
+        },
+      }
+    );
 
-    // Extrair dados do FormData
+    // Extract data from FormData
     const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    console.log("Received data:", rawData);
 
-    // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
+    // Processar os dados para validação
+    const dataToValidate = {
+      email: rawData.email,
+      password: rawData.password,
+    };
 
-    // Se houver erro de validação, retorna imediatamente com os erros
+    // Verificar se há algum parâmetro JSON no FormData
+    for (const [key, value] of Object.entries(rawData)) {
+      try {
+        const parsedValue = JSON.parse(value);
+        
+        if (parsedValue && typeof parsedValue === 'object') {
+          // Mesclar os valores do JSON com dataToValidate
+          Object.keys(parsedValue).forEach(field => {
+            dataToValidate[field] = parsedValue[field];
+          });
+          break;
+        }
+      } catch (e) {
+        // Não é JSON, ignorar
+      }
+    }
+    
+    // Validar com Zod
+    const validation = schema.safeParse(dataToValidate);
+    
+    // Se a validação falhar, retornar erros
     if (!validation.success) {
+      console.error("Validation error:", validation.error.flatten());
       return {
         success: false,
         errors: validation.error.flatten().fieldErrors,
       };
     }
-
+    
     // Dados validados
     const data = validation.data;
+    console.log("Validated data:", data);
 
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
+    // Tentar fazer login
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
 
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
-    
-    return { 
+    if (authError) {
+      console.error("Auth error:", authError);
+      
+      // Verificar o tipo de erro para retornar mensagem apropriada
+      if (authError.message.includes("Invalid login credentials")) {
+        return {
+          success: false,
+          errors: {
+            _form: "Email ou senha incorretos",
+          },
+        };
+      }
+      
+      return {
+        success: false,
+        errors: {
+          _form: `Erro ao fazer login: ${authError.message}`,
+        },
+      };
+    }
+
+    if (!authData.user) {
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao fazer login. Por favor, tente novamente.",
+        },
+      };
+    }
+
+    // Buscar informações do perfil
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Profile error:", profileError);
+      // Não retornar erro, apenas continuar sem as informações do perfil
+    }
+
+    // Revalidate relevant paths
+    revalidatePath("/login");
+    revalidatePath("/dashboard");
+    revalidatePath("/profile");
+
+    return {
       success: true,
-      message: "login executado com sucesso",
-      // Dados adicionais que você queira retornar
+      user: {
+        id: authData.user.id,
+        email: authData.user.email,
+        fullName: profile?.full_name || authData.user.user_metadata?.full_name,
+        userType: profile?.user_type || authData.user.user_metadata?.user_type,
+        avatarUrl: profile?.avatar_url,
+      },
+      // session: {
+      //   accessToken: authData.session.access_token,
+      //   refreshToken: authData.session.refresh_token,
+      //   expiresAt: authData.session.expires_at,
+      // },
+      message: "Login realizado com sucesso!",
     };
-
   } catch (error) {
     console.error("login error:", error);
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar login. Tente novamente.",
+        _form: error.message || "Erro ao fazer login. Por favor, tente novamente.",
       },
     };
   }

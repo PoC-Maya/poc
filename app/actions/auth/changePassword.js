@@ -1,13 +1,13 @@
 'use server'
 
 /**
- * @description Alterar senha
+ * @description Alterar senha do usuário
  * @category auth
  * @inputModel {
-  currentPassword: 'senhaAtual',
-  newPassword: 'novaSenha',
-  confirmPassword: 'novaSenha'
-}
+ *   "currentPassword": "senhaAtual",
+ *   "newPassword": "novaSenha",
+ *   "confirmPassword": "novaSenha"
+ * }
  */
 
 import { requireAuth } from "@/lib/withAuth";
@@ -16,20 +16,38 @@ import { z } from "zod";
 
 // Schema para validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  currentPassword: z.string().min(6, "A senha atual deve ter pelo menos 6 caracteres"),
+  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string().min(6, "A confirmação da senha deve ter pelo menos 6 caracteres"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 export async function changePassword(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
+    // Pega o usuário autenticado e o cliente Supabase
+    const { user, supabase } = await requireAuth();
+
+    if (!user) {
+      return {
+        success: false,
+        errors: {
+          _form: "Usuário não autenticado. Faça login para alterar a senha.",
+        },
+      };
+    }
 
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    
+    // Log seguro: substitui os valores reais das senhas por asteriscos para não expor dados sensíveis nos logs
+    console.log('Dados recebidos (senhas ocultadas):', { 
+      ...rawData, 
+      currentPassword: '***', 
+      newPassword: '***', 
+      confirmPassword: '***' 
+    });
 
     // Validação dos dados do formulário  
     const validation = schema.safeParse(rawData);
@@ -45,26 +63,43 @@ export async function changePassword(prevState, formData) {
     // Dados validados
     const data = validation.data;
 
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
+    // Verificar a senha atual usando o método de login
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: data.currentPassword,
+    });
 
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    if (verifyError) {
+      return {
+        success: false,
+        errors: {
+          currentPassword: "Senha atual incorreta",
+          _form: "Não foi possível verificar a senha atual",
+        },
+      };
+    }
+
+    // Atualizar a senha
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: data.newPassword,
+    });
+
+    if (updateError) {
+      console.error("Erro ao atualizar senha:", updateError);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao atualizar senha: " + updateError.message,
+        },
+      };
+    }
+
+    // Revalidar caminhos relevantes - corrigido para /me/perfil
+    revalidatePath('/me/perfil');
     
     return { 
       success: true,
-      message: "changePassword executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Senha alterada com sucesso",
     };
 
   } catch (error) {
@@ -72,7 +107,7 @@ export async function changePassword(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar changePassword. Tente novamente.",
+        _form: "Erro ao alterar senha. Tente novamente.",
       },
     };
   }

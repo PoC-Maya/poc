@@ -1,19 +1,31 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Send, PlusCircle, Paperclip, ImageIcon, FileText } from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Mensagem } from "@/components/cotacoes/mensagem"
-import { CriarCotacaoForm } from "@/components/cotacoes/criar-cotacao-form"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  Send,
+  PlusCircle,
+  Paperclip,
+  ImageIcon,
+  FileText,
+} from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Mensagem } from "@/components/cotacoes/mensagem";
+import { CriarCotacaoForm } from "@/components/cotacoes/criar-cotacao-form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +33,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 // Dados simulados de conversas (mesmo array do arquivo anterior)
 const conversas = [
@@ -52,7 +70,8 @@ const conversas = [
     mensagens: [
       {
         id: "msg1",
-        texto: "Olá! Gostaria de saber mais sobre tours em cenotes na região de Tulum.",
+        texto:
+          "Olá! Gostaria de saber mais sobre tours em cenotes na região de Tulum.",
         data: "2023-07-14T10:15:00Z",
         remetente: "turista",
       },
@@ -65,13 +84,15 @@ const conversas = [
       },
       {
         id: "msg3",
-        texto: "Estou planejando ir no dia 25 de julho. Seremos eu e minha esposa.",
+        texto:
+          "Estou planejando ir no dia 25 de julho. Seremos eu e minha esposa.",
         data: "2023-07-14T10:25:00Z",
         remetente: "turista",
       },
       {
         id: "msg4",
-        texto: "Perfeito! Vou preparar uma cotação para vocês com os melhores cenotes para visitar.",
+        texto:
+          "Perfeito! Vou preparar uma cotação para vocês com os melhores cenotes para visitar.",
         data: "2023-07-14T10:30:00Z",
         remetente: "guia",
       },
@@ -130,19 +151,22 @@ const conversas = [
     mensagens: [
       {
         id: "msg1",
-        texto: "Olá! Estou interessada em fazer um passeio de barco em Isla Mujeres com minha família.",
+        texto:
+          "Olá! Estou interessada em fazer um passeio de barco em Isla Mujeres com minha família.",
         data: "2023-07-13T16:20:00Z",
         remetente: "turista",
       },
       {
         id: "msg2",
-        texto: "Olá Ana! Será um prazer ajudá-la com esse passeio. Quantas pessoas serão?",
+        texto:
+          "Olá Ana! Será um prazer ajudá-la com esse passeio. Quantas pessoas serão?",
         data: "2023-07-13T16:25:00Z",
         remetente: "guia",
       },
       {
         id: "msg3",
-        texto: "Seremos 4 pessoas: eu, meu marido e nossos dois filhos (10 e 12 anos).",
+        texto:
+          "Seremos 4 pessoas: eu, meu marido e nossos dois filhos (10 e 12 anos).",
         data: "2023-07-13T16:30:00Z",
         remetente: "turista",
       },
@@ -209,7 +233,7 @@ const conversas = [
     cotacao: null,
     dataCriacao: "2023-07-14T11:20:00Z",
   },
-]
+];
 
 // Cotações disponíveis para enviar
 const cotacoesDisponiveis = [
@@ -260,21 +284,21 @@ const cotacoesDisponiveis = [
     data: "2023-08-05",
     pessoas: 2,
   },
-]
+];
 
 // Função para formatar data
 function formatarData(dataString) {
-  const data = new Date(dataString)
-  const hoje = new Date()
-  const ontem = new Date(hoje)
-  ontem.setDate(hoje.getDate() - 1)
+  const data = new Date(dataString);
+  const hoje = new Date();
+  const ontem = new Date(hoje);
+  ontem.setDate(hoje.getDate() - 1);
 
   if (data.toDateString() === hoje.toDateString()) {
-    return format(data, "'Hoje,' HH:mm", { locale: ptBR })
+    return format(data, "'Hoje,' HH:mm", { locale: ptBR });
   } else if (data.toDateString() === ontem.toDateString()) {
-    return format(data, "'Ontem,' HH:mm", { locale: ptBR })
+    return format(data, "'Ontem,' HH:mm", { locale: ptBR });
   } else {
-    return format(data, "dd 'de' MMMM, HH:mm", { locale: ptBR })
+    return format(data, "dd 'de' MMMM, HH:mm", { locale: ptBR });
   }
 }
 
@@ -282,17 +306,17 @@ function formatarData(dataString) {
 function getStatusColor(status) {
   switch (status) {
     case "pendente":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
     case "aprovada":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
     case "rejeitada":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     case "paga":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
     case "aguardando_cotacao":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
   }
 }
 
@@ -300,72 +324,74 @@ function getStatusColor(status) {
 function traduzirStatus(status) {
   switch (status) {
     case "pendente":
-      return "Cotação Pendente"
+      return "Cotação Pendente";
     case "aprovada":
-      return "Cotação Aprovada"
+      return "Cotação Aprovada";
     case "rejeitada":
-      return "Cotação Rejeitada"
+      return "Cotação Rejeitada";
     case "paga":
-      return "Pagamento Realizado"
+      return "Pagamento Realizado";
     case "aguardando_cotacao":
-      return "Aguardando Cotação"
+      return "Aguardando Cotação";
     default:
-      return status
+      return status;
   }
 }
 
-export default function ConversaPage({ params }) {
-  const [inputValue, setInputValue] = useState("")
-  const [showCotacaoForm, setShowCotacaoForm] = useState(false)
-  const [selectedCotacao, setSelectedCotacao] = useState(null)
-  const [showCotacaoDialog, setShowCotacaoDialog] = useState(false)
-  const messagesEndRef = useRef(null)
+export default function ConversaPage() {
+  const params = useParams();
+  const { id } = params;
+  const [inputValue, setInputValue] = useState("");
+  const [showCotacaoForm, setShowCotacaoForm] = useState(false);
+  const [selectedCotacao, setSelectedCotacao] = useState(null);
+  const [showCotacaoDialog, setShowCotacaoDialog] = useState(false);
+  const messagesEndRef = useRef(null);
 
   // Encontrar a conversa pelo ID
-  const conversa = conversas.find((c) => c.id === params.id) || conversas[0]
+  const conversa = conversas.find((c) => c.id === id) || conversas[0];
 
   // Rolar para o final quando novas mensagens são adicionadas
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [conversa.mensagens])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversa.mensagens]);
 
   const handleSendMessage = () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim()) return;
     // Aqui você implementaria a lógica para enviar a mensagem
-    console.log("Enviando mensagem:", inputValue)
-    setInputValue("")
-  }
+    console.log("Enviando mensagem:", inputValue);
+    setInputValue("");
+  };
 
   const handleCreateCotacao = (cotacaoData) => {
     // Aqui você implementaria a lógica para criar a cotação
-    console.log("Criando cotação:", cotacaoData)
+    console.log("Criando cotação:", cotacaoData);
 
     // Adicionar uma mensagem simulando o envio da cotação
-    console.log("Cotação enviada para o turista:", conversa.turista.nome)
+    console.log("Cotação enviada para o turista:", conversa.turista.nome);
 
     // Fechar o drawer
-    setShowCotacaoForm(false)
-  }
+    setShowCotacaoForm(false);
+  };
 
   const handleSelectCotacao = (cotacao) => {
-    setSelectedCotacao(cotacao)
-    setShowCotacaoDialog(true)
-  }
+    setSelectedCotacao(cotacao);
+    setShowCotacaoDialog(true);
+  };
 
   const handleSendCotacao = () => {
-    if (!selectedCotacao) return
+    if (!selectedCotacao) return;
 
     // Aqui você implementaria a lógica para enviar a cotação
-    console.log("Enviando cotação:", selectedCotacao)
+    console.log("Enviando cotação:", selectedCotacao);
 
     // Fechar o diálogo
-    setShowCotacaoDialog(false)
-    setSelectedCotacao(null)
-  }
+    setShowCotacaoDialog(false);
+    setSelectedCotacao(null);
+  };
 
   // Componente para renderizar uma cotação no diálogo
   const CotacaoPreview = ({ cotacao }) => {
-    if (!cotacao) return null
+    if (!cotacao) return null;
 
     return (
       <div className="space-y-4">
@@ -412,7 +438,9 @@ export default function ConversaPage({ params }) {
           <p className="font-medium">Não inclui:</p>
           <ul className="list-disc list-inside text-sm">
             {cotacao.naoInclui && cotacao.naoInclui.map ? (
-              cotacao.naoInclui.map((item, index) => <li key={index}>{item}</li>)
+              cotacao.naoInclui.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))
             ) : (
               <li>Informações não disponíveis</li>
             )}
@@ -424,8 +452,8 @@ export default function ConversaPage({ params }) {
           <p className="text-sm">{cotacao.pontoEncontro}</p>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="flex-1 space-y-4">
@@ -435,8 +463,12 @@ export default function ConversaPage({ params }) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-2xl font-bold tracking-tight">Conversa com {conversa.turista.nome}</h2>
-        <Badge className={getStatusColor(conversa.status)}>{traduzirStatus(conversa.status)}</Badge>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Conversa com {conversa.turista.nome}
+        </h2>
+        <Badge className={getStatusColor(conversa.status)}>
+          {traduzirStatus(conversa.status)}
+        </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -445,22 +477,39 @@ export default function ConversaPage({ params }) {
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={conversa.turista.avatar} alt={conversa.turista.nome} />
-                  <AvatarFallback>{conversa.turista.nome ? conversa.turista.nome.charAt(0) : "T"}</AvatarFallback>
+                  <AvatarImage
+                    src={conversa.turista.avatar}
+                    alt={conversa.turista.nome}
+                  />
+                  <AvatarFallback>
+                    {conversa.turista.nome
+                      ? conversa.turista.nome.charAt(0)
+                      : "T"}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-base">{conversa.turista.nome}</CardTitle>
-                  <p className="text-xs text-muted-foreground">{conversa.turista.email}</p>
+                  <CardTitle className="text-base">
+                    {conversa.turista.nome}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {conversa.turista.email}
+                  </p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
               {conversa.mensagens && Array.isArray(conversa.mensagens) ? (
                 conversa.mensagens.map((mensagem) => (
-                  <Mensagem key={mensagem.id} mensagem={mensagem} guiaNome="Miguel Guia" />
+                  <Mensagem
+                    key={mensagem.id}
+                    mensagem={mensagem}
+                    guiaNome="Miguel Guia"
+                  />
                 ))
               ) : (
-                <p className="text-center text-muted-foreground py-4">Nenhuma mensagem disponível</p>
+                <p className="text-center text-muted-foreground py-4">
+                  Nenhuma mensagem disponível
+                </p>
               )}
               <div ref={messagesEndRef} />
             </CardContent>
@@ -468,7 +517,12 @@ export default function ConversaPage({ params }) {
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" type="button">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-9 w-9"
+                      type="button"
+                    >
                       <PlusCircle className="h-5 w-5" />
                     </Button>
                   </PopoverTrigger>
@@ -484,16 +538,22 @@ export default function ConversaPage({ params }) {
                       </Button>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" className="flex items-center justify-start gap-2 px-2">
+                          <Button
+                            variant="ghost"
+                            className="flex items-center justify-start gap-2 px-2"
+                          >
                             <FileText className="h-4 w-4" />
                             <span>Enviar Cotação</span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-72" align="start">
                           <div className="space-y-2">
-                            <h4 className="font-medium">Selecione uma cotação</h4>
+                            <h4 className="font-medium">
+                              Selecione uma cotação
+                            </h4>
                             <div className="grid gap-2 max-h-[300px] overflow-y-auto">
-                              {cotacoesDisponiveis && Array.isArray(cotacoesDisponiveis) ? (
+                              {cotacoesDisponiveis &&
+                              Array.isArray(cotacoesDisponiveis) ? (
                                 cotacoesDisponiveis.map((cotacao) => (
                                   <Button
                                     key={cotacao.id}
@@ -502,15 +562,22 @@ export default function ConversaPage({ params }) {
                                     onClick={() => handleSelectCotacao(cotacao)}
                                   >
                                     <div className="text-left">
-                                      <p className="font-medium">{cotacao.titulo}</p>
+                                      <p className="font-medium">
+                                        {cotacao.titulo}
+                                      </p>
                                       <p className="text-xs text-muted-foreground">
-                                        USD {cotacao.valor} • {cotacao.duracao ? cotacao.duracao + "h" : ""}
+                                        USD {cotacao.valor} •{" "}
+                                        {cotacao.duracao
+                                          ? cotacao.duracao + "h"
+                                          : ""}
                                       </p>
                                     </div>
                                   </Button>
                                 ))
                               ) : (
-                                <p className="text-center text-muted-foreground py-2">Nenhuma cotação disponível</p>
+                                <p className="text-center text-muted-foreground py-2">
+                                  Nenhuma cotação disponível
+                                </p>
                               )}
                             </div>
                           </div>
@@ -519,10 +586,20 @@ export default function ConversaPage({ params }) {
                     </div>
                   </PopoverContent>
                 </Popover>
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" type="button">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9"
+                  type="button"
+                >
                   <Paperclip className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" type="button">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9"
+                  type="button"
+                >
                   <ImageIcon className="h-5 w-5" />
                 </Button>
                 <div className="flex-1 relative">
@@ -533,7 +610,7 @@ export default function ConversaPage({ params }) {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        handleSendMessage()
+                        handleSendMessage();
                       }
                     }}
                   />
@@ -560,17 +637,30 @@ export default function ConversaPage({ params }) {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={conversa.turista.avatar} alt={conversa.turista.nome || "Turista"} />
-                  <AvatarFallback>{conversa.turista.nome ? conversa.turista.nome.charAt(0) : "T"}</AvatarFallback>
+                  <AvatarImage
+                    src={conversa.turista.avatar}
+                    alt={conversa.turista.nome || "Turista"}
+                  />
+                  <AvatarFallback>
+                    {conversa.turista.nome
+                      ? conversa.turista.nome.charAt(0)
+                      : "T"}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-medium">{conversa.turista.nome || "Turista"}</h3>
-                  <p className="text-sm text-muted-foreground">{conversa.turista.email || "Email não disponível"}</p>
+                  <h3 className="font-medium">
+                    {conversa.turista.nome || "Turista"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {conversa.turista.email || "Email não disponível"}
+                  </p>
                 </div>
               </div>
               <Separator />
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Conversa iniciada em:</p>
+                <p className="text-sm text-muted-foreground">
+                  Conversa iniciada em:
+                </p>
                 <p>{formatarData(conversa.dataCriacao)}</p>
               </div>
             </CardContent>
@@ -582,15 +672,23 @@ export default function ConversaPage({ params }) {
             </CardHeader>
             <CardContent className="space-y-4">
               {conversa.status === "aguardando_cotacao" ? (
-                <Button className="w-full" onClick={() => setShowCotacaoForm(true)}>
+                <Button
+                  className="w-full"
+                  onClick={() => setShowCotacaoForm(true)}
+                >
                   Criar Cotação
                 </Button>
               ) : conversa.status === "pendente" ? (
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Cotação enviada em:</p>
+                  <p className="text-sm text-muted-foreground">
+                    Cotação enviada em:
+                  </p>
                   <p>
-                    {conversa.mensagens && conversa.mensagens.find((m) => m.cotacao)?.data
-                      ? formatarData(conversa.mensagens.find((m) => m.cotacao)?.data)
+                    {conversa.mensagens &&
+                    conversa.mensagens.find((m) => m.cotacao)?.data
+                      ? formatarData(
+                          conversa.mensagens.find((m) => m.cotacao)?.data
+                        )
                       : "Data não disponível"}
                   </p>
                   <Button className="w-full" variant="outline">
@@ -600,8 +698,14 @@ export default function ConversaPage({ params }) {
               ) : (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Status:</p>
-                  <Badge className={getStatusColor(conversa.status)}>{traduzirStatus(conversa.status)}</Badge>
-                  {conversa.status === "aprovada" && <Button className="w-full mt-2">Enviar Link de Pagamento</Button>}
+                  <Badge className={getStatusColor(conversa.status)}>
+                    {traduzirStatus(conversa.status)}
+                  </Badge>
+                  {conversa.status === "aprovada" && (
+                    <Button className="w-full mt-2">
+                      Enviar Link de Pagamento
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -610,14 +714,23 @@ export default function ConversaPage({ params }) {
       </div>
 
       {/* Drawer para criar cotação */}
-      <Sheet open={showCotacaoForm} onOpenChange={setShowCotacaoForm} side="bottom">
+      <Sheet
+        open={showCotacaoForm}
+        onOpenChange={setShowCotacaoForm}
+        side="bottom"
+      >
         <SheetContent className="h-[90vh] px-6" side="bottom">
           <SheetHeader className="mb-6">
             <SheetTitle>Criar Nova Cotação</SheetTitle>
-            <SheetDescription>Crie uma cotação personalizada para {conversa.turista.nome}</SheetDescription>
+            <SheetDescription>
+              Crie uma cotação personalizada para {conversa.turista.nome}
+            </SheetDescription>
           </SheetHeader>
           <div className="overflow-y-auto h-[calc(90vh-120px)]">
-            <CriarCotacaoForm onSubmit={handleCreateCotacao} onCancel={() => setShowCotacaoForm(false)} />
+            <CriarCotacaoForm
+              onSubmit={handleCreateCotacao}
+              onCancel={() => setShowCotacaoForm(false)}
+            />
           </div>
         </SheetContent>
       </Sheet>
@@ -628,7 +741,8 @@ export default function ConversaPage({ params }) {
           <DialogHeader>
             <DialogTitle>Enviar Cotação</DialogTitle>
             <DialogDescription>
-              Revise os detalhes da cotação antes de enviar para {conversa.turista.nome}.
+              Revise os detalhes da cotação antes de enviar para{" "}
+              {conversa.turista.nome}.
             </DialogDescription>
           </DialogHeader>
 
@@ -637,7 +751,10 @@ export default function ConversaPage({ params }) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCotacaoDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCotacaoDialog(false)}
+            >
               Cancelar
             </Button>
             <Button onClick={handleSendCotacao}>Enviar Cotação</Button>
@@ -645,6 +762,5 @@ export default function ConversaPage({ params }) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-

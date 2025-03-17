@@ -1,30 +1,27 @@
 'use server'
 
 /**
- * @description Solicitar/confirmar redefinição de senha
+ * @description Solicitar redefinição de senha
  * @category auth
  * @inputModel {
-  email: 'usuario@exemplo.com'
-}
+ *   "email": "usuario@exemplo.com"
+ * }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email/emailService";
 import { z } from "zod";
 
 // Schema para validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  email: z.string().email("Email inválido"),
 });
+
+// Controle de limite de taxa
+const rateLimits = new Map();
 
 export async function resetPassword(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
     console.log('Dados recebidos:', rawData);
@@ -42,27 +39,60 @@ export async function resetPassword(prevState, formData) {
 
     // Dados validados
     const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    const email = data.email;
+    
+    // Verificar limite de taxa
+    const now = Date.now();
+    const lastRequest = rateLimits.get(email);
+    
+    if (lastRequest && (now - lastRequest) < 20000) { // 20 segundos
+      return {
+        success: false,
+        errors: {
+          _form: "Por motivos de segurança, você só pode solicitar uma redefinição de senha a cada 20 segundos. Por favor, aguarde um momento e tente novamente.",
+        },
+      };
+    }
+    
+    // Atualizar timestamp do último pedido
+    rateLimits.set(email, now);
+    
+    // Criar cliente Supabase
+    const supabase = await createClient();
+    
+    // Usar a API padrão em vez da API de admin
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password/confirm`,
+    });
+    
+    if (error) {
+      // Tratamento específico para erro de limite de taxa
+      if (error.status === 429 || error.code === 'over_email_send_rate_limit') {
+        console.log("Erro de limite de taxa:", error);
+        return {
+          success: false,
+          errors: {
+            _form: "Por motivos de segurança, você só pode solicitar uma redefinição de senha a cada 20 segundos. Por favor, aguarde um momento e tente novamente.",
+          },
+        };
+      }
+      
+      console.error("Erro ao solicitar redefinição:", error);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao solicitar redefinição de senha: " + error.message,
+        },
+      };
+    }
+    
+    // Se chegou até aqui, o Supabase enviou o email padrão
+    // Podemos enviar um email personalizado adicional se quisermos
+    // Mas para evitar confusão, vamos apenas retornar sucesso
     
     return { 
       success: true,
-      message: "resetPassword executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Se o email estiver cadastrado, você receberá um link para redefinir sua senha.",
     };
 
   } catch (error) {
@@ -70,7 +100,7 @@ export async function resetPassword(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar resetPassword. Tente novamente.",
+        _form: "Erro ao solicitar redefinição de senha. Tente novamente.",
       },
     };
   }

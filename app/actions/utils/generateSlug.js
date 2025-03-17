@@ -1,78 +1,60 @@
-'use server'
+// Vamos verificar a implementação da função generateSlug
+
+"use server"
+
+import { createClient } from "@/lib/supabase/server"
 
 /**
- * @description Gerar slug para URLs
- * @category utils
- * @inputModel {
-  text: 'Título do Post ou Experiência',
-  type: 'experience' // 'experience', 'blog', etc.
-}
+ * Gera um slug único baseado no título
+ * @param {string} title - Título para gerar o slug
+ * @param {string} type - Tipo de conteúdo (blog, experience, etc)
+ * @returns {Promise<string>} - Slug único
  */
+export async function generateSlug(title, type = "blog") {
+  if (!title) return ""
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
+  // Converter para minúsculas e remover caracteres especiais
+  const slug = title
+    .toLowerCase()
+    .normalize("NFD") // Normaliza caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[^\w\s-]/g, "") // Remove caracteres especiais
+    .replace(/\s+/g, "-") // Substitui espaços por hífens
+    .replace(/-+/g, "-") // Remove hífens duplicados
+    .trim() // Remove espaços no início e fim
 
-// Schema para validação
-const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
-});
+  // Verificar se o slug já existe no banco de dados
+  const supabase = createClient()
 
-export async function generateSlug(prevState, formData) {
-  try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
-    // Extrair dados do FormData
-    const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
-
-    // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
-
-    // Se houver erro de validação, retorna imediatamente com os erros
-    if (!validation.success) {
-      return {
-        success: false,
-        errors: validation.error.flatten().fieldErrors,
-      };
-    }
-
-    // Dados validados
-    const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
-    
-    return { 
-      success: true,
-      message: "generateSlug executado com sucesso",
-      // Dados adicionais que você queira retornar
-    };
-
-  } catch (error) {
-    console.error("generateSlug error:", error);
-    return {
-      success: false,
-      errors: {
-        _form: "Erro ao executar generateSlug. Tente novamente.",
-      },
-    };
+  let table
+  switch (type) {
+    case "blog":
+      table = "blog_posts"
+      break
+    case "experience":
+      table = "experiences"
+      break
+    default:
+      table = "blog_posts"
   }
+
+  let isUnique = false
+  let counter = 0
+  let uniqueSlug = slug
+
+  while (!isUnique) {
+    const { data, error } = await supabase.from(table).select("slug").eq("slug", uniqueSlug).single()
+
+    if (error || !data) {
+      // Slug não existe, podemos usá-lo
+      isUnique = true
+    } else {
+      // Slug existe, adicionar contador
+      counter++
+      uniqueSlug = `${slug}-${counter}`
+    }
+  }
+
+  return uniqueSlug
 }
+

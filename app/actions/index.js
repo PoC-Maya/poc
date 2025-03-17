@@ -3,108 +3,1452 @@
  * Gerado automaticamente
  */
 // No início do arquivo index.js
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === "development";
+
+// utils
+import { cloudinarySignature as _cloudinarySignature } from "./utils/cloudinarySignature.js";
+
+_cloudinarySignature.metadata = {
+  description: "Assinar upload no Cloudinary",
+  category: " utilitario",
+  inputModel: {
+    folder: "blog",
+  },
+  supabaseInfos: {
+    dbTables: "",
+    dbProcedures: "",
+    dbRelations: "",
+  },
+};
+
+export const cloudinarySignature = _cloudinarySignature;
+/**
+ * @description Obtém logs de auditoria do sistema
+ * @category Admin
+ * @inputModel {
+ *   startDate: string,
+ *   endDate: string,
+ *   userId: string,
+ *   actionType: string,
+ *   page: number,
+ *   limit: number
+ * }
+ * @dbTables audit_logs(SELECT), users(SELECT)
+ * @dbProcedures sp_get_audit_logs
+ * @dbRelations audit_logs.user_id->users.id
+ */
 import { getAuditLogs as _getAuditLogs } from "./admin/getAuditLogs.js";
+
+/**
+ * @description Obtém estatísticas para o dashboard administrativo
+ * @category Admin
+ * @inputModel {
+ *   period: string
+ * }
+ * @dbTables bookings(SELECT), users(SELECT), experiences(SELECT), reviews(SELECT), payments(SELECT)
+ * @dbProcedures sp_get_dashboard_stats
+ * @dbRelations bookings.user_id->users.id, bookings.experience_id->experiences.id, reviews.booking_id->bookings.id, payments.booking_id->bookings.id
+ */
 import { getDashboardStats as _getDashboardStats } from "./admin/getDashboardStats.js";
+
+/**
+ * @description Verifica a saúde do sistema
+ * @category Admin
+ * @inputModel {}
+ * @dbTables system_health(SELECT), system_logs(SELECT)
+ * @dbProcedures sp_check_system_health
+ * @dbRelations system_health.log_id->system_logs.id
+ */
 import { getSystemHealth as _getSystemHealth } from "./admin/getSystemHealth.js";
+
+/**
+ * @description Lista usuários do sistema
+ * @category Admin
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   status: string,
+ *   role: string,
+ *   search: string
+ * }
+ * @dbTables users(SELECT), user_roles(SELECT), profiles(SELECT)
+ * @dbProcedures sp_list_users
+ * @dbRelations users.id->profiles.user_id, users.role_id->user_roles.id
+ */
 import { listUsers as _listUsers } from "./admin/listUsers.js";
+
+/**
+ * @description Gerencia categorias de experiências
+ * @category Admin
+ * @inputModel {
+ *   action: string,
+ *   categoryId: string,
+ *   name: string,
+ *   description: string,
+ *   icon: string
+ * }
+ * @dbTables categories(SELECT,INSERT,UPDATE,DELETE), experiences_categories(SELECT,UPDATE)
+ * @dbProcedures sp_manage_categories
+ * @dbRelations categories.id->experiences_categories.category_id
+ */
 import { manageCategories as _manageCategories } from "./admin/manageCategories.js";
+
+/**
+ * @description Gerencia localizações disponíveis no sistema
+ * @category Admin
+ * @inputModel {
+ *   action: string,
+ *   locationId: string,
+ *   name: string,
+ *   country: string,
+ *   state: string,
+ *   city: string,
+ *   coordinates: object
+ * }
+ * @dbTables locations(SELECT,INSERT,UPDATE,DELETE), experiences_locations(SELECT,UPDATE)
+ * @dbProcedures sp_manage_locations
+ * @dbRelations locations.id->experiences_locations.location_id
+ */
 import { manageLocations as _manageLocations } from "./admin/manageLocations.js";
+
+/**
+ * @description Atualiza o status de um usuário
+ * @category Admin
+ * @inputModel {
+ *   userId: string,
+ *   status: string,
+ *   reason: string
+ * }
+ * @dbTables users(SELECT,UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_update_user_status
+ * @dbRelations audit_logs.user_id->users.id
+ */
 import { updateUserStatus as _updateUserStatus } from "./admin/updateUserStatus.js";
+
+/**
+ * @description Altera a senha do usuário
+ * @category Auth
+ * @inputModel {
+ *   currentPassword: string,
+ *   newPassword: string
+ * }
+ * @dbTables users(SELECT,UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_change_password
+ * @dbRelations audit_logs.user_id->users.id
+ */
 import { changePassword as _changePassword } from "./auth/changePassword.js";
+
+/**
+ * @description Exclui a conta do usuário
+ * @category Auth
+ * @inputModel {
+ *   password: string,
+ *   reason: string
+ * }
+ * @dbTables users(SELECT,UPDATE), profiles(UPDATE), bookings(UPDATE), experiences(UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_delete_account
+ * @dbRelations users.id->profiles.user_id, users.id->bookings.user_id, users.id->experiences.guide_id, audit_logs.user_id->users.id
+ */
 import { deleteAccount as _deleteAccount } from "./auth/deleteAccount.js";
+
+/**
+ * @description Realiza login do usuário
+ * @category Auth
+ * @inputModel {
+ *   email: string,
+ *   password: string
+ * }
+ * @dbTables users(SELECT,UPDATE), audit_logs(INSERT), sessions(INSERT)
+ * @dbProcedures sp_user_login
+ * @dbRelations sessions.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { login as _login } from "./auth/login.js";
+
+/**
+ * @description Realiza logout do usuário
+ * @category Auth
+ * @inputModel {}
+ * @dbTables sessions(UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_user_logout
+ * @dbRelations sessions.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { logout as _logout } from "./auth/logout.js";
+
+/**
+ * @description Registra um novo usuário
+ * @category Auth
+ * @inputModel {
+ *   email: string,
+ *   password: string,
+ *   name: string,
+ *   role: string
+ * }
+ * @dbTables users(INSERT), profiles(INSERT), user_settings(INSERT), audit_logs(INSERT)
+ * @dbProcedures sp_register_user
+ * @dbRelations users.id->profiles.user_id, users.id->user_settings.user_id, audit_logs.user_id->users.id
+ */
 import { register as _register } from "./auth/register.js";
+
+/**
+ * @description Redefine a senha do usuário
+ * @category Auth
+ * @inputModel {
+ *   token: string,
+ *   newPassword: string
+ * }
+ * @dbTables users(SELECT,UPDATE), password_reset_tokens(SELECT,UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_reset_password
+ * @dbRelations password_reset_tokens.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { resetPassword as _resetPassword } from "./auth/resetPassword.js";
+
+/**
+ * @description Salva consentimento do usuário
+ * @category Auth
+ * @inputModel {
+ *   consentType: string,
+ *   value: boolean
+ * }
+ * @dbTables user_consents(INSERT,UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_save_user_consent
+ * @dbRelations user_consents.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { saveConsent as _saveConsent } from "./auth/saveConsent.js";
+
+/**
+ * @description Atualiza preferências do usuário
+ * @category Auth
+ * @inputModel {
+ *   preferences: object
+ * }
+ * @dbTables user_settings(SELECT,UPDATE), audit_logs(INSERT)
+ * @dbProcedures sp_update_user_preferences
+ * @dbRelations user_settings.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { updatePreferences as _updatePreferences } from "./auth/updatePreferences.js";
+
+/**
+ * @description Atualiza perfil do usuário
+ * @category Auth
+ * @inputModel {
+ *   name: string,
+ *   bio: string,
+ *   phone: string,
+ *   avatar: string,
+ *   language: string
+ * }
+ * @dbTables profiles(SELECT,UPDATE), users(SELECT), audit_logs(INSERT)
+ * @dbProcedures sp_update_user_profile
+ * @dbRelations profiles.user_id->users.id, audit_logs.user_id->users.id
+ */
 import { updateProfile as _updateProfile } from "./auth/updateProfile.js";
+
+/**
+ * @description Adiciona exceção à disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   date: string,
+ *   reason: string,
+ *   guideId: string
+ * }
+ * @dbTables availability_exceptions(INSERT), guides(SELECT)
+ * @dbProcedures sp_add_availability_exception
+ * @dbRelations availability_exceptions.guide_id->guides.id, guides.user_id->users.id
+ */
 import { addException as _addException } from "./availability/addException.js";
+
+/**
+ * @description Adiciona bloco de tempo à disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   dayOfWeek: number,
+ *   startTime: string,
+ *   endTime: string,
+ *   guideId: string,
+ *   templateId: string
+ * }
+ * @dbTables availability_time_blocks(INSERT), availability_templates(SELECT), guides(SELECT)
+ * @dbProcedures sp_add_time_block
+ * @dbRelations availability_time_blocks.template_id->availability_templates.id, availability_templates.guide_id->guides.id, guides.user_id->users.id
+ */
 import { addTimeBlock as _addTimeBlock } from "./availability/addTimeBlock.js";
+
+/**
+ * @description Cria template de disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   name: string,
+ *   description: string,
+ *   isDefault: boolean,
+ *   guideId: string
+ * }
+ * @dbTables availability_templates(INSERT), guides(SELECT)
+ * @dbProcedures sp_create_availability_template
+ * @dbRelations availability_templates.guide_id->guides.id, guides.user_id->users.id
+ */
 import { createAvailabilityTemplate as _createAvailabilityTemplate } from "./availability/createAvailabilityTemplate.js";
+
+/**
+ * @description Obtém datas disponíveis
+ * @category Availability
+ * @inputModel {
+ *   experienceId: string,
+ *   startDate: string,
+ *   endDate: string
+ * }
+ * @dbTables experiences(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT), availability_exceptions(SELECT), bookings(SELECT)
+ * @dbProcedures sp_get_available_dates
+ * @dbRelations experiences.guide_id->guides.id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id, guides.id->availability_exceptions.guide_id, experiences.id->bookings.experience_id
+ */
 import { getAvailableDates as _getAvailableDates } from "./availability/getAvailableDates.js";
+
+/**
+ * @description Obtém horários disponíveis
+ * @category Availability
+ * @inputModel {
+ *   experienceId: string,
+ *   date: string
+ * }
+ * @dbTables experiences(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT), availability_exceptions(SELECT), bookings(SELECT)
+ * @dbProcedures sp_get_available_times
+ * @dbRelations experiences.guide_id->guides.id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id, guides.id->availability_exceptions.guide_id, experiences.id->bookings.experience_id
+ */
 import { getAvailableTimes as _getAvailableTimes } from "./availability/getAvailableTimes.js";
+
+/**
+ * @description Remove exceção de disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   exceptionId: string,
+ *   guideId: string
+ * }
+ * @dbTables availability_exceptions(SELECT,DELETE), guides(SELECT)
+ * @dbProcedures sp_remove_availability_exception
+ * @dbRelations availability_exceptions.guide_id->guides.id, guides.user_id->users.id
+ */
 import { removeException as _removeException } from "./availability/removeException.js";
+
+/**
+ * @description Remove bloco de tempo da disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   blockId: string,
+ *   guideId: string
+ * }
+ * @dbTables availability_time_blocks(SELECT,DELETE), availability_templates(SELECT), guides(SELECT)
+ * @dbProcedures sp_remove_time_block
+ * @dbRelations availability_time_blocks.template_id->availability_templates.id, availability_templates.guide_id->guides.id, guides.user_id->users.id
+ */
 import { removeTimeBlock as _removeTimeBlock } from "./availability/removeTimeBlock.js";
+
+/**
+ * @description Atualiza template de disponibilidade
+ * @category Availability
+ * @inputModel {
+ *   templateId: string,
+ *   name: string,
+ *   description: string,
+ *   isDefault: boolean,
+ *   guideId: string
+ * }
+ * @dbTables availability_templates(SELECT,UPDATE), guides(SELECT)
+ * @dbProcedures sp_update_availability_template
+ * @dbRelations availability_templates.guide_id->guides.id, guides.user_id->users.id
+ */
 import { updateAvailabilityTemplate as _updateAvailabilityTemplate } from "./availability/updateAvailabilityTemplate.js";
+
+/**
+ * @description Cria post no blog
+ * @category Blog
+ * @inputModel {
+ *   title: string,
+ *   content: string,
+ *   excerpt: string,
+ *   featuredImage: string,
+ *   tags: array,
+ *   status: string
+ * }
+ * @dbTables blog_posts(INSERT), blog_tags(INSERT), blog_post_tags(INSERT)
+ * @dbProcedures sp_create_blog_post
+ * @dbRelations blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id
+ */
 import { createPost as _createPost } from "./blog/createPost.js";
+
+/**
+ * @description Exclui post do blog
+ * @category Blog
+ * @inputModel {
+ *   postId: string
+ * }
+ * @dbTables blog_posts(SELECT,UPDATE), blog_post_tags(DELETE)
+ * @dbProcedures sp_delete_blog_post
+ * @dbRelations blog_posts.id->blog_post_tags.post_id
+ */
 import { deletePost as _deletePost } from "./blog/deletePost.js";
+
+/**
+ * @description Obtém detalhes de um post
+ * @category Blog
+ * @inputModel {
+ *   postId: string,
+ *   slug: string
+ * }
+ * @dbTables blog_posts(SELECT), blog_tags(SELECT), blog_post_tags(SELECT), users(SELECT)
+ * @dbProcedures sp_get_post_details
+ * @dbRelations blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id
+ */
 import { getPostDetails as _getPostDetails } from "./blog/getPostDetails.js";
+
+/**
+ * @description Lista posts do blog
+ * @category Blog
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   tag: string,
+ *   search: string,
+ *   status: string
+ * }
+ * @dbTables blog_posts(SELECT), blog_tags(SELECT), blog_post_tags(SELECT), users(SELECT)
+ * @dbProcedures sp_list_blog_posts
+ * @dbRelations blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id
+ */
 import { listPosts as _listPosts } from "./blog/listPosts.js";
-import { publishPost as _publishPost } from "./blog/publishPost.js";
-import { unpublishPost as _unpublishPost } from "./blog/unpublishPost.js";
+
+/**
+ * @description Atualiza post do blog
+ * @category Blog
+ * @inputModel {
+ *   postId: string,
+ *   title: string,
+ *   content: string,
+ *   excerpt: string,
+ *   coverImage: [File],
+ *   galleryImages:[[File]],
+ *   tags: array
+ * }
+ * @dbTables blog_posts(SELECT,UPDATE), blog_tags(SELECT,INSERT), blog_post_tags(DELETE,INSERT)
+ * @dbProcedures sp_update_blog_post
+ * @dbRelations blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id
+ */
 import { updatePost as _updatePost } from "./blog/updatePost.js";
-import { uploadPostImage as _uploadPostImage } from "./blog/uploadPostImage.js";
+
+/**
+ * @description Calcula preço de uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   experienceId: string,
+ *   date: string,
+ *   time: string,
+ *   participants: number,
+ *   addons: array,
+ *   couponCode: string
+ * }
+ * @dbTables experiences(SELECT), experience_pricing(SELECT), experience_addons(SELECT), coupons(SELECT)
+ * @dbProcedures sp_calculate_booking_price
+ * @dbRelations experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, coupons.experience_id->experiences.id
+ */
 import { calculateBookingPrice as _calculateBookingPrice } from "./bookings/calculateBookingPrice.js";
+
+/**
+ * @description Cancela uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   reason: string,
+ *   refundAmount: number
+ * }
+ * @dbTables bookings(SELECT,UPDATE), payments(SELECT,UPDATE), refunds(INSERT), notifications(INSERT)
+ * @dbProcedures sp_cancel_booking
+ * @dbRelations bookings.id->payments.booking_id, payments.id->refunds.payment_id, bookings.user_id->notifications.user_id
+ */
 import { cancelBooking as _cancelBooking } from "./bookings/cancelBooking.js";
+
+/**
+ * @description Marca uma reserva como concluída
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   notes: string
+ * }
+ * @dbTables bookings(SELECT,UPDATE), notifications(INSERT)
+ * @dbProcedures sp_complete_booking
+ * @dbRelations bookings.user_id->notifications.user_id, bookings.guide_id->guides.id
+ */
 import { completeBooking as _completeBooking } from "./bookings/completeBooking.js";
+
+/**
+ * @description Confirma uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   notes: string
+ * }
+ * @dbTables bookings(SELECT,UPDATE), notifications(INSERT)
+ * @dbProcedures sp_confirm_booking
+ * @dbRelations bookings.user_id->notifications.user_id, bookings.guide_id->guides.id
+ */
 import { confirmBooking as _confirmBooking } from "./bookings/confirmBooking.js";
+
+/**
+ * @description Cria uma nova reserva
+ * @category Bookings
+ * @inputModel {
+ *   experienceId: string,
+ *   date: string,
+ *   time: string,
+ *   participants: number,
+ *   addons: array,
+ *   specialRequests: string,
+ *   contactInfo: object,
+ *   couponCode: string
+ * }
+ * @dbTables bookings(INSERT), booking_addons(INSERT), experiences(SELECT), guides(SELECT), availability_exceptions(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT)
+ * @dbProcedures sp_create_booking
+ * @dbRelations bookings.experience_id->experiences.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, guides.id->availability_exceptions.guide_id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id
+ */
 import { createBooking as _createBooking } from "./bookings/createBooking.js";
+
+/**
+ * @description Obtém detalhes de uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string
+ * }
+ * @dbTables bookings(SELECT), booking_addons(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT)
+ * @dbProcedures sp_get_booking_details
+ * @dbRelations bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, bookings.id->payments.booking_id
+ */
 import { getBookingDetails as _getBookingDetails } from "./bookings/getBookingDetails.js";
+
+/**
+ * @description Lista reservas
+ * @category Bookings
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   status: string,
+ *   userId: string,
+ *   guideId: string,
+ *   startDate: string,
+ *   endDate: string
+ * }
+ * @dbTables bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)
+ * @dbProcedures sp_list_bookings
+ * @dbRelations bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id
+ */
 import { listBookings as _listBookings } from "./bookings/listBookings.js";
+
+/**
+ * @description Processa pagamento de uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   paymentMethod: string,
+ *   paymentDetails: object
+ * }
+ * @dbTables bookings(SELECT,UPDATE), payments(INSERT), payment_details(INSERT)
+ * @dbProcedures sp_process_payment
+ * @dbRelations bookings.id->payments.booking_id, payments.id->payment_details.payment_id
+ */
 import { processPayment as _processPayment } from "./bookings/processPayment.js";
+
+/**
+ * @description Envia confirmação de reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   emailTemplate: string
+ * }
+ * @dbTables bookings(SELECT), users(SELECT), experiences(SELECT), guides(SELECT), email_logs(INSERT)
+ * @dbProcedures sp_send_booking_confirmation
+ * @dbRelations bookings.user_id->users.id, bookings.experience_id->experiences.id, experiences.guide_id->guides.id, users.id->email_logs.user_id
+ */
 import { sendBookingConfirmation as _sendBookingConfirmation } from "./bookings/sendBookingConfirmation.js";
+
+/**
+ * @description Atualiza uma reserva
+ * @category Bookings
+ * @inputModel {
+ *   bookingId: string,
+ *   date: string,
+ *   time: string,
+ *   participants: number,
+ *   addons: array,
+ *   specialRequests: string
+ * }
+ * @dbTables bookings(SELECT,UPDATE), booking_addons(DELETE,INSERT), experiences(SELECT), guides(SELECT), availability_exceptions(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT)
+ * @dbProcedures sp_update_booking
+ * @dbRelations bookings.experience_id->experiences.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, guides.id->availability_exceptions.guide_id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id
+ */
 import { updateBooking as _updateBooking } from "./bookings/updateBooking.js";
+
+/**
+ * @description Cria um novo chat
+ * @category Chats
+ * @inputModel {
+ *   recipientId: string,
+ *   initialMessage: string
+ * }
+ * @dbTables chats(INSERT), chat_messages(INSERT), users(SELECT)
+ * @dbProcedures sp_create_chat
+ * @dbRelations chats.user1_id->users.id, chats.user2_id->users.id, chats.id->chat_messages.chat_id
+ */
 import { createChat as _createChat } from "./chats/createChat.js";
+
+/**
+ * @description Obtém mensagens de um chat
+ * @category Chats
+ * @inputModel {
+ *   chatId: string,
+ *   page: number,
+ *   limit: number
+ * }
+ * @dbTables chats(SELECT), chat_messages(SELECT), users(SELECT)
+ * @dbProcedures sp_get_chat_messages
+ * @dbRelations chats.id->chat_messages.chat_id, chat_messages.sender_id->users.id
+ */
 import { getChatMessages as _getChatMessages } from "./chats/getChatMessages.js";
+
+/**
+ * @description Lista chats do usuário
+ * @category Chats
+ * @inputModel {
+ *   page: number,
+ *   limit: number
+ * }
+ * @dbTables chats(SELECT), chat_messages(SELECT), users(SELECT)
+ * @dbProcedures sp_list_user_chats
+ * @dbRelations chats.user1_id->users.id, chats.user2_id->users.id, chats.id->chat_messages.chat_id
+ */
 import { listChats as _listChats } from "./chats/listChats.js";
+
+/**
+ * @description Marca mensagens como lidas
+ * @category Chats
+ * @inputModel {
+ *   chatId: string,
+ *   messageIds: array
+ * }
+ * @dbTables chat_messages(SELECT,UPDATE)
+ * @dbProcedures sp_mark_messages_as_read
+ * @dbRelations chat_messages.chat_id->chats.id
+ */
 import { markAsRead as _markAsRead } from "./chats/markAsRead.js";
+
+/**
+ * @description Envia mensagem em um chat
+ * @category Chats
+ * @inputModel {
+ *   chatId: string,
+ *   message: string,
+ *   attachments: array
+ * }
+ * @dbTables chats(SELECT), chat_messages(INSERT), chat_attachments(INSERT)
+ * @dbProcedures sp_send_chat_message
+ * @dbRelations chats.id->chat_messages.chat_id, chat_messages.id->chat_attachments.message_id
+ */
 import { sendMessage as _sendMessage } from "./chats/sendMessage.js";
+
+/**
+ * @description Adiciona item ao itinerário de uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   title: string,
+ *   description: string,
+ *   duration: number,
+ *   order: number
+ * }
+ * @dbTables experiences(SELECT), itinerary_items(INSERT)
+ * @dbProcedures sp_add_itinerary_item
+ * @dbRelations experiences.id->itinerary_items.experience_id
+ */
 import { addItineraryItem as _addItineraryItem } from "./experiences/addItineraryItem.js";
+
+/**
+ * @description Clona uma experiência existente
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   newTitle: string
+ * }
+ * @dbTables experiences(SELECT,INSERT), itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT  itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT), experience_images(SELECT,INSERT)
+ * @dbProcedures sp_clone_experience
+ * @dbRelations experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id
+ */
 import { cloneExperience as _cloneExperience } from "./experiences/cloneExperience.js";
+
+/**
+ * @description Cria uma experiência personalizada
+ * @category Experiences
+ * @inputModel {
+ *   title: string,
+ *   description: string,
+ *   duration: number,
+ *   basePrice: number,
+ *   locationId: string,
+ *   customRequirements: string
+ * }
+ * @dbTables experiences(INSERT), experience_pricing(INSERT), guides(SELECT), locations(SELECT)
+ * @dbProcedures sp_create_custom_experience
+ * @dbRelations experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id
+ */
 import { createCustomExperience as _createCustomExperience } from "./experiences/createCustomExperience.js";
+
+/**
+ * @description Cria uma nova experiência
+ * @category Experiences
+ * @inputModel {
+ *   title: string,
+ *   description: string,
+ *   duration: number,
+ *   basePrice: number,
+ *   maxParticipants: number,
+ *   categories: array,
+ *   locationId: string,
+ *   languages: array,
+ *   includedItems: array,
+ *   excludedItems: array
+ * }
+ * @dbTables experiences(INSERT), experience_pricing(INSERT), experience_categories(INSERT), experience_languages(INSERT), experience_included_items(INSERT), experience_excluded_items(INSERT), guides(SELECT), locations(SELECT), categories(SELECT)
+ * @dbProcedures sp_create_experience
+ * @dbRelations experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experience_categories.category_id->categories.id
+ */
 import { createExperience as _createExperience } from "./experiences/createExperience.js";
+
+/**
+ * @description Exclui uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string
+ * }
+ * @dbTables experiences(SELECT,UPDATE), itinerary_items(UPDATE), experience_pricing(UPDATE), experience_addons(UPDATE), experience_images(UPDATE), experience_categories(UPDATE), experience_languages(UPDATE)
+ * @dbProcedures sp_delete_experience
+ * @dbRelations experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id
+ */
 import { deleteExperience as _deleteExperience } from "./experiences/deleteExperience.js";
+
+/**
+ * @description Exclui item do itinerário
+ * @category Experiences
+ * @inputModel {
+ *   itemId: string,
+ *   experienceId: string
+ * }
+ * @dbTables itinerary_items(SELECT,DELETE), experiences(SELECT)
+ * @dbProcedures sp_delete_itinerary_item
+ * @dbRelations itinerary_items.experience_id->experiences.id
+ */
 import { deleteItineraryItem as _deleteItineraryItem } from "./experiences/deleteItineraryItem.js";
+
+/**
+ * @description Obtém detalhes de uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   slug: string
+ * }
+ * @dbTables experiences(SELECT), itinerary_items(SELECT), experience_pricing(SELECT), experience_addons(SELECT), experience_images(SELECT), experience_categories(SELECT), experience_languages(SELECT), experience_included_items(SELECT), experience_excluded_items(SELECT), guides(SELECT), locations(SELECT), categories(SELECT), reviews(SELECT)
+ * @dbProcedures sp_get_experience_details
+ * @dbRelations experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experiences.id->reviews.experience_id
+ */
 import { getExperienceDetails as _getExperienceDetails } from "./experiences/getExperienceDetails.js";
+
+/**
+ * @description Lista experiências
+ * @category Experiences
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   categoryId: string,
+ *   locationId: string,
+ *   priceMin: number,
+ *   priceMax: number,
+ *   durationMin: number,
+ *   durationMax: number,
+ *   search: string,
+ *   guideId: string,
+ *   status: string,
+ *   sortBy: string
+ * }
+ * @dbTables experiences(SELECT), experience_pricing(SELECT), experience_categories(SELECT), guides(SELECT), locations(SELECT), categories(SELECT), reviews(SELECT)
+ * @dbProcedures sp_list_experiences
+ * @dbRelations experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->reviews.experience_id
+ */
 import { listExperiences as _listExperiences } from "./experiences/listExperiences.js";
+
+/**
+ * @description Traduz uma experiência para outro idioma
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   targetLanguage: string
+ * }
+ * @dbTables experiences(SELECT,INSERT), experience_translations(INSERT), itinerary_items(SELECT), itinerary_item_translations(INSERT)
+ * @dbProcedures sp_translate_experience
+ * @dbRelations experiences.id->experience_translations.experience_id, experiences.id->itinerary_items.experience_id, itinerary_items.id->itinerary_item_translations.item_id
+ */
 import { translateExperience as _translateExperience } from "./experiences/translateExperience.js";
+
+/**
+ * @description Atualiza uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   title: string,
+ *   description: string,
+ *   duration: number,
+ *   maxParticipants: number,
+ *   categories: array,
+ *   locationId: string,
+ *   languages: array,
+ *   includedItems: array,
+ *   excludedItems: array
+ * }
+ * @dbTables experiences(SELECT,UPDATE), experience_categories(DELETE,INSERT), experience_languages(DELETE,INSERT), experience_included_items(DELETE,INSERT), experience_excluded_items(DELETE,INSERT), locations(SELECT), categories(SELECT)
+ * @dbProcedures sp_update_experience
+ * @dbRelations experiences.location_id->locations.id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id
+ */
 import { updateExperience as _updateExperience } from "./experiences/updateExperience.js";
+
+/**
+ * @description Atualiza status de uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   status: string,
+ *   reason: string
+ * }
+ * @dbTables experiences(SELECT,UPDATE), experience_status_history(INSERT)
+ * @dbProcedures sp_update_experience_status
+ * @dbRelations experiences.id->experience_status_history.experience_id
+ */
 import { updateExperienceStatus as _updateExperienceStatus } from "./experiences/updateExperienceStatus.js";
+
+/**
+ * @description Atualiza item do itinerário
+ * @category Experiences
+ * @inputModel {
+ *   itemId: string,
+ *   experienceId: string,
+ *   title: string,
+ *   description: string,
+ *   duration: number,
+ *   order: number
+ * }
+ * @dbTables itinerary_items(SELECT,UPDATE), experiences(SELECT)
+ * @dbProcedures sp_update_itinerary_item
+ * @dbRelations itinerary_items.experience_id->experiences.id
+ */
 import { updateItineraryItem as _updateItineraryItem } from "./experiences/updateItineraryItem.js";
+
+/**
+ * @description Atualiza preços de uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   basePrice: number,
+ *   discountPrice: number,
+ *   childPrice: number,
+ *   groupDiscounts: array,
+ *   addons: array
+ * }
+ * @dbTables experience_pricing(SELECT,UPDATE), experience_addons(DELETE,INSERT), experiences(SELECT)
+ * @dbProcedures sp_update_experience_pricing
+ * @dbRelations experience_pricing.experience_id->experiences.id, experiences.id->experience_addons.experience_id
+ */
 import { updatePricing as _updatePricing } from "./experiences/updatePricing.js";
+
+/**
+ * @description Faz upload de imagens para uma experiência
+ * @category Experiences
+ * @inputModel {
+ *   experienceId: string,
+ *   images: array,
+ *   mainImageIndex: number
+ * }
+ * @dbTables experiences(SELECT,UPDATE), experience_images(INSERT)
+ * @dbProcedures sp_upload_experience_images
+ * @dbRelations experiences.id->experience_images.experience_id
+ */
 import { uploadExperienceImages as _uploadExperienceImages } from "./experiences/uploadExperienceImages.js";
+
+/**
+ * @description Completa o processo de onboarding de um guia
+ * @category Guides
+ * @inputModel {
+ *   steps: object
+ * }
+ * @dbTables guides(SELECT,UPDATE), guide_onboarding(INSERT,UPDATE)
+ * @dbProcedures sp_complete_guide_onboarding
+ * @dbRelations guides.id->guide_onboarding.guide_id
+ */
 import { completeOnboarding as _completeOnboarding } from "./guides/completeOnboarding.js";
+
+/**
+ * @description Cria perfil de guia
+ * @category Guides
+ * @inputModel {
+ *   bio: string,
+ *   languages: array,
+ *   specialties: array,
+ *   yearsOfExperience: number,
+ *   certifications: array
+ * }
+ * @dbTables guides(INSERT), guide_languages(INSERT), guide_specialties(INSERT), guide_certifications(INSERT), users(SELECT)
+ * @dbProcedures sp_create_guide_profile
+ * @dbRelations guides.user_id->users.id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id
+ */
 import { createGuideProfile as _createGuideProfile } from "./guides/createGuideProfile.js";
+
+/**
+ * @description Obtém detalhes de um guia
+ * @category Guides
+ * @inputModel {
+ *   guideId: string,
+ *   userId: string
+ * }
+ * @dbTables guides(SELECT), guide_languages(SELECT), guide_specialties(SELECT), guide_certifications(SELECT), users(SELECT), profiles(SELECT), experiences(SELECT), reviews(SELECT)
+ * @dbProcedures sp_get_guide_details
+ * @dbRelations guides.user_id->users.id, users.id->profiles.user_id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id, guides.id->experiences.guide_id, guides.id->reviews.guide_id
+ */
 import { getGuideDetails as _getGuideDetails } from "./guides/getGuideDetails.js";
+
+/**
+ * @description Obtém estatísticas de um guia
+ * @category Guides
+ * @inputModel {
+ *   period: string
+ * }
+ * @dbTables guides(SELECT), bookings(SELECT), experiences(SELECT), reviews(SELECT), payments(SELECT)
+ * @dbProcedures sp_get_guide_stats
+ * @dbRelations guides.id->experiences.guide_id, experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, bookings.id->payments.booking_id
+ */
 import { getGuideStats as _getGuideStats } from "./guides/getGuideStats.js";
+
+/**
+ * @description Lista guias
+ * @category Guides
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   status: string,
+ *   specialty: string,
+ *   language: string,
+ *   location: string,
+ *   search: string
+ * }
+ * @dbTables guides(SELECT), users(SELECT), profiles(SELECT), guide_languages(SELECT), guide_specialties(SELECT), experiences(SELECT), locations(SELECT), reviews(SELECT)
+ * @dbProcedures sp_list_guides
+ * @dbRelations guides.user_id->users.id, users.id->profiles.user_id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->experiences.guide_id, experiences.location_id->locations.id, guides.id->reviews.guide_id
+ */
 import { listGuides as _listGuides } from "./guides/listGuides.js";
+
+/**
+ * @description Atualiza taxa de comissão de um guia
+ * @category Guides
+ * @inputModel {
+ *   guideId: string,
+ *   commissionRate: number,
+ *   reason: string
+ * }
+ * @dbTables guides(SELECT,UPDATE), commission_history(INSERT)
+ * @dbProcedures sp_update_guide_commission
+ * @dbRelations guides.id->commission_history.guide_id
+ */
 import { updateCommissionRate as _updateCommissionRate } from "./guides/updateCommissionRate.js";
+
+/**
+ * @description Atualiza perfil de guia
+ * @category Guides
+ * @inputModel {
+ *   bio: string,
+ *   languages: array,
+ *   specialties: array,
+ *   yearsOfExperience: number
+ * }
+ * @dbTables guides(SELECT,UPDATE), guide_languages(DELETE,INSERT), guide_specialties(DELETE,INSERT)
+ * @dbProcedures sp_update_guide_profile
+ * @dbRelations guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id
+ */
 import { updateGuideProfile as _updateGuideProfile } from "./guides/updateGuideProfile.js";
+
+/**
+ * @description Faz upload de certificações de guia
+ * @category Guides
+ * @inputModel {
+ *   certifications: array
+ * }
+ * @dbTables guides(SELECT), guide_certifications(INSERT)
+ * @dbProcedures sp_upload_guide_certifications
+ * @dbRelations guides.id->guide_certifications.guide_id
+ */
 import { uploadCertifications as _uploadCertifications } from "./guides/uploadCertifications.js";
+
+/**
+ * @description Verifica um guia
+ * @category Guides
+ * @inputModel {
+ *   guideId: string,
+ *   status: string,
+ *   notes: string
+ * }
+ * @dbTables guides(SELECT,UPDATE), guide_verification_history(INSERT), notifications(INSERT)
+ * @dbProcedures sp_verify_guide
+ * @dbRelations guides.id->guide_verification_history.guide_id, guides.user_id->notifications.user_id
+ */
 import { verifyGuide as _verifyGuide } from "./guides/verifyGuide.js";
+
+/**
+ * @description Inscreve-se em um template de experiência
+ * @category Marketplace
+ * @inputModel {
+ *   templateId: string
+ * }
+ * @dbTables template_enrollments(INSERT), experience_templates(SELECT), guides(SELECT)
+ * @dbProcedures sp_enroll_in_template
+ * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
+ */
 import { enrollInTemplate as _enrollInTemplate } from "./marketplace/enrollInTemplate.js";
+
+/**
+ * @description Obtém detalhes de um template
+ * @category Marketplace
+ * @inputModel {
+ *   templateId: string
+ * }
+ * @dbTables experience_templates(SELECT), template_itinerary_items(SELECT), template_pricing(SELECT), template_addons(SELECT), template_images(SELECT), template_categories(SELECT), template_languages(SELECT), template_included_items(SELECT), template_excluded_items(SELECT), locations(SELECT), categories(SELECT)
+ * @dbProcedures sp_get_template_details
+ * @dbRelations experience_templates.location_id->locations.id, experience_templates.id->template_itinerary_items.template_id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_addons.template_id, experience_templates.id->template_images.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id, experience_templates.id->template_languages.template_id, experience_templates.id->template_included_items.template_id, experience_templates.id->template_excluded_items.template_id
+ */
 import { getTemplateDetails as _getTemplateDetails } from "./marketplace/getTemplateDetails.js";
+
+/**
+ * @description Lista templates em que o guia está inscrito
+ * @category Marketplace
+ * @inputModel {
+ *   page: number,
+ *   limit: number
+ * }
+ * @dbTables template_enrollments(SELECT), experience_templates(SELECT), guides(SELECT)
+ * @dbProcedures sp_list_enrolled_templates
+ * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
+ */
 import { listEnrolledTemplates as _listEnrolledTemplates } from "./marketplace/listEnrolledTemplates.js";
+
+/**
+ * @description Lista experiências de template
+ * @category Marketplace
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   categoryId: string,
+ *   locationId: string,
+ *   search: string
+ * }
+ * @dbTables experience_templates(SELECT), template_pricing(SELECT), template_categories(SELECT), locations(SELECT), categories(SELECT)
+ * @dbProcedures sp_list_template_experiences
+ * @dbRelations experience_templates.location_id->locations.id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id
+ */
 import { listTemplateExperiences as _listTemplateExperiences } from "./marketplace/listTemplateExperiences.js";
+
+/**
+ * @description Cancela inscrição em um template
+ * @category Marketplace
+ * @inputModel {
+ *   templateId: string,
+ *   reason: string
+ * }
+ * @dbTables template_enrollments(SELECT,DELETE), experience_templates(SELECT), guides(SELECT)
+ * @dbProcedures sp_unenroll_from_template
+ * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
+ */
 import { unenrollFromTemplate as _unenrollFromTemplate } from "./marketplace/unenrollFromTemplate.js";
+
+/**
+ * @description Obtém notificações não lidas
+ * @category Notifications
+ * @inputModel {
+ *   limit: number
+ * }
+ * @dbTables notifications(SELECT), users(SELECT)
+ * @dbProcedures sp_get_unread_notifications
+ * @dbRelations notifications.user_id->users.id
+ */
 import { getUnreadNotifications as _getUnreadNotifications } from "./notifications/getUnreadNotifications.js";
+
+/**
+ * @description Marca notificação como lida
+ * @category Notifications
+ * @inputModel {
+ *   notificationId: string
+ * }
+ * @dbTables notifications(SELECT,UPDATE)
+ * @dbProcedures sp_mark_notification_as_read
+ * @dbRelations notifications.user_id->users.id
+ */
 import { markNotificationAsRead as _markNotificationAsRead } from "./notifications/markNotificationAsRead.js";
+
+/**
+ * @description Envia notificação
+ * @category Notifications
+ * @inputModel {
+ *   userId: string,
+ *   type: string,
+ *   title: string,
+ *   message: string,
+ *   data: object
+ * }
+ * @dbTables notifications(INSERT), users(SELECT)
+ * @dbProcedures sp_send_notification
+ * @dbRelations notifications.user_id->users.id
+ */
 import { sendNotification as _sendNotification } from "./notifications/sendNotification.js";
+
+/**
+ * @description Atualiza preferências de notificação
+ * @category Notifications
+ * @inputModel {
+ *   preferences: object
+ * }
+ * @dbTables notification_preferences(SELECT,UPDATE), users(SELECT)
+ * @dbProcedures sp_update_notification_preferences
+ * @dbRelations notification_preferences.user_id->users.id
+ */
 import { updateNotificationPreferences as _updateNotificationPreferences } from "./notifications/updateNotificationPreferences.js";
+
+/**
+ * @description Aprova uma cotação
+ * @category Quotations
+ * @inputModel {
+ *   quotationId: string,
+ *   notes: string
+ * }
+ * @dbTables quotations(SELECT,UPDATE), notifications(INSERT)
+ * @dbProcedures sp_approve_quotation
+ * @dbRelations quotations.user_id->notifications.user_id
+ */
 import { approveQuotation as _approveQuotation } from "./quotations/approveQuotation.js";
+
+/**
+ * @description Converte cotação em reserva
+ * @category Quotations
+ * @inputModel {
+ *   quotationId: string
+ * }
+ * @dbTables quotations(SELECT,UPDATE), bookings(INSERT), booking_addons(INSERT)
+ * @dbProcedures sp_convert_quotation_to_booking
+ * @dbRelations quotations.experience_id->bookings.experience_id, quotations.user_id->bookings.user_id, bookings.id->booking_addons.booking_id
+ */
 import { convertToBooking as _convertToBooking } from "./quotations/convertToBooking.js";
+
+/**
+ * @description Cria uma nova cotação
+ * @category Quotations
+ * @inputModel {
+ *   experienceId: string,
+ *   date: string,
+ *   time: string,
+ *   participants: number,
+ *   addons: array,
+ *   specialRequests: string,
+ *   contactInfo: object
+ * }
+ * @dbTables quotations(INSERT), quotation_addons(INSERT), experiences(SELECT), guides(SELECT)
+ * @dbProcedures sp_create_quotation
+ * @dbRelations quotations.experience_id->experiences.id, experiences.guide_id->guides.id, quotations.id->quotation_addons.quotation_id
+ */
 import { createQuotation as _createQuotation } from "./quotations/createQuotation.js";
+
+/**
+ * @description Obtém detalhes de uma cotação
+ * @category Quotations
+ * @inputModel {
+ *   quotationId: string
+ * }
+ * @dbTables quotations(SELECT), quotation_addons(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)
+ * @dbProcedures sp_get_quotation_details
+ * @dbRelations quotations.experience_id->experiences.id, quotations.user_id->users.id, experiences.guide_id->guides.id, quotations.id->quotation_addons.quotation_id
+ */
 import { getQuotationDetails as _getQuotationDetails } from "./quotations/getQuotationDetails.js";
+
+/**
+ * @description Lista cotações
+ * @category Quotations
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   status: string,
+ *   userId: string,
+ *   guideId: string,
+ *   startDate: string,
+ *   endDate: string
+ * }
+ * @dbTables quotations(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)
+ * @dbProcedures sp_list_quotations
+ * @dbRelations quotations.experience_id->experiences.id, quotations.user_id->users.id, experiences.guide_id->guides.id
+ */
 import { listQuotations as _listQuotations } from "./quotations/listQuotations.js";
+
+/**
+ * @description Rejeita uma cotação
+ * @category Quotations
+ * @inputModel {
+ *   quotationId: string,
+ *   reason: string
+ * }
+ * @dbTables quotations(SELECT,UPDATE), notifications(INSERT)
+ * @dbProcedures sp_reject_quotation
+ * @dbRelations quotations.user_id->notifications.user_id
+ */
 import { rejectQuotation as _rejectQuotation } from "./quotations/rejectQuotation.js";
+
+/**
+ * @description Atualiza uma cotação
+ * @category Quotations
+ * @inputModel {
+ *   quotationId: string,
+ *   price: number,
+ *   notes: string,
+ *   validUntil: string
+ * }
+ * @dbTables quotations(SELECT,UPDATE), quotation_history(INSERT)
+ * @dbProcedures sp_update_quotation
+ * @dbRelations quotations.id->quotation_history.quotation_id
+ */
 import { updateQuotation as _updateQuotation } from "./quotations/updateQuotation.js";
+
+/**
+ * @description Exporta dados do sistema
+ * @category Reports
+ * @inputModel {
+ *   type: string,
+ *   format: string,
+ *   filters: object,
+ *   startDate: string,
+ *   endDate: string
+ * }
+ * @dbTables bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT), reviews(SELECT)
+ * @dbProcedures sp_export_data
+ * @dbRelations bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->payments.booking_id, experiences.id->reviews.experience_id
+ */
 import { exportData as _exportData } from "./reports/exportData.js";
+
+/**
+ * @description Obtém relatório de reservas
+ * @category Reports
+ * @inputModel {
+ *   startDate: string,
+ *   endDate: string,
+ *   guideId: string,
+ *   status: string
+ * }
+ * @dbTables bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT)
+ * @dbProcedures sp_get_booking_report
+ * @dbRelations bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->payments.booking_id
+ */
 import { getBookingReport as _getBookingReport } from "./reports/getBookingReport.js";
+
+/**
+ * @description Obtém relatório de desempenho de experiências
+ * @category Reports
+ * @inputModel {
+ *   startDate: string,
+ *   endDate: string,
+ *   experienceId: string,
+ *   categoryId: string
+ * }
+ * @dbTables experiences(SELECT), bookings(SELECT), reviews(SELECT), experience_categories(SELECT), categories(SELECT)
+ * @dbProcedures sp_get_experience_performance_report
+ * @dbRelations experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id
+ */
 import { getExperiencePerformanceReport as _getExperiencePerformanceReport } from "./reports/getExperiencePerformanceReport.js";
+
+/**
+ * @description Obtém relatório de desempenho de guias
+ * @category Reports
+ * @inputModel {
+ *   startDate: string,
+ *   endDate: string,
+ *   guideId: string
+ * }
+ * @dbTables guides(SELECT), experiences(SELECT), bookings(SELECT), reviews(SELECT), payments(SELECT)
+ * @dbProcedures sp_get_guide_performance_report
+ * @dbRelations guides.id->experiences.guide_id, experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, bookings.id->payments.booking_id
+ */
 import { getGuidePerformanceReport as _getGuidePerformanceReport } from "./reports/getGuidePerformanceReport.js";
+
+/**
+ * @description Obtém relatório de receita
+ * @category Reports
+ * @inputModel {
+ *   startDate: string,
+ *   endDate: string,
+ *   groupBy: string
+ * }
+ * @dbTables payments(SELECT), bookings(SELECT), experiences(SELECT), guides(SELECT)
+ * @dbProcedures sp_get_revenue_report
+ * @dbRelations payments.booking_id->bookings.id, bookings.experience_id->experiences.id, experiences.guide_id->guides.id
+ */
 import { getRevenueReport as _getRevenueReport } from "./reports/getRevenueReport.js";
+
+/**
+ * @description Cria uma nova avaliação
+ * @category Reviews
+ * @inputModel {
+ *   experienceId: string,
+ *   bookingId: string,
+ *   rating: number,
+ *   comment: string,
+ *   attributes: object
+ * }
+ * @dbTables reviews(INSERT), review_attributes(INSERT), bookings(SELECT), experiences(SELECT), guides(SELECT)
+ * @dbProcedures sp_create_review
+ * @dbRelations reviews.experience_id->experiences.id, reviews.booking_id->bookings.id, reviews.guide_id->guides.id, reviews.id->review_attributes.review_id
+ */
 import { createReview as _createReview } from "./reviews/createReview.js";
+
+/**
+ * @description Exclui uma avaliação
+ * @category Reviews
+ * @inputModel {
+ *   reviewId: string,
+ *   reason: string
+ * }
+ * @dbTables reviews(SELECT,UPDATE), review_attributes(UPDATE)
+ * @dbProcedures sp_delete_review
+ * @dbRelations reviews.id->review_attributes.review_id
+ */
 import { deleteReview as _deleteReview } from "./reviews/deleteReview.js";
+
+/**
+ * @description Obtém estatísticas de avaliações
+ * @category Reviews
+ * @inputModel {
+ *   experienceId: string,
+ *   guideId: string
+ * }
+ * @dbTables reviews(SELECT), review_attributes(SELECT), experiences(SELECT), guides(SELECT)
+ * @dbProcedures sp_get_review_stats
+ * @dbRelations reviews.experience_id->experiences.id, reviews.guide_id->guides.id, reviews.id->review_attributes.review_id
+ */
 import { getReviewStats as _getReviewStats } from "./reviews/getReviewStats.js";
+
+/**
+ * @description Lista avaliações
+ * @category Reviews
+ * @inputModel {
+ *   page: number,
+ *   limit: number,
+ *   experienceId: string,
+ *   guideId: string,
+ *   userId: string,
+ *   minRating: number,
+ *   maxRating: number
+ * }
+ * @dbTables reviews(SELECT), review_attributes(SELECT), experiences(SELECT), guides(SELECT), users(SELECT)
+ * @dbProcedures sp_list_reviews
+ * @dbRelations reviews.experience_id->experiences.id, reviews.guide_id->guides.id, reviews.user_id->users.id, reviews.id->review_attributes.review_id
+ */
 import { listReviews as _listReviews } from "./reviews/listReviews.js";
+
+/**
+ * @description Atualiza uma avaliação
+ * @category Reviews
+ * @inputModel {
+ *   reviewId: string,
+ *   rating: number,
+ *   comment: string,
+ *   attributes: object
+ * }
+ * @dbTables reviews(SELECT,UPDATE), review_attributes(DELETE,INSERT)
+ * @dbProcedures sp_update_review
+ * @dbRelations reviews.id->review_attributes.review_id
+ */
 import { updateReview as _updateReview } from "./reviews/updateReview.js";
+
+/**
+ * @description Exclui uma imagem
+ * @category Utils
+ * @inputModel {
+ *   imageId: string,
+ *   type: string
+ * }
+ * @dbTables experience_images(SELECT,DELETE), blog_images(SELECT,DELETE), guide_certifications(SELECT,DELETE)
+ * @dbProcedures sp_delete_image
+ * @dbRelations experience_images.experience_id->experiences.id, blog_images.post_id->blog_posts.id, guide_certifications.guide_id->guides.id
+ */
 import { deleteImage as _deleteImage } from "./utils/deleteImage.js";
+
+/**
+ * @description Gera slug para URL
+ * @category Utils
+ * @inputModel {
+ *   text: string,
+ *   type: string,
+ *   id: string
+ * }
+ * @dbTables experiences(SELECT), blog_posts(SELECT)
+ * @dbProcedures sp_generate_slug
+ * @dbRelations null
+ */
 import { generateSlug as _generateSlug } from "./utils/generateSlug.js";
+
+/**
+ * @description Obtém coordenadas de uma localização
+ * @category Utils
+ * @inputModel {
+ *   address: string,
+ *   city: string,
+ *   country: string
+ * }
+ * @dbTables locations(SELECT,INSERT)
+ * @dbProcedures sp_get_location_coordinates
+ * @dbRelations null
+ */
 import { getLocationCoordinates as _getLocationCoordinates } from "./utils/getLocationCoordinates.js";
+
+/**
+ * @description Traduz texto para outro idioma
+ * @category Utils
+ * @inputModel {
+ *   text: string,
+ *   sourceLanguage: string,
+ *   targetLanguage: string
+ * }
+ * @dbTables translation_cache(SELECT,INSERT)
+ * @dbProcedures sp_translate_text
+ * @dbRelations null
+ */
 import { translateText as _translateText } from "./utils/translateText.js";
+
+/**
+ * @description Faz upload de imagem
+ * @category Utils
+ * @inputModel {
+ *   image: file,
+ *   type: string,
+ *   id: string
+ * }
+ * @dbTables experience_images(INSERT), blog_images(INSERT), profiles(UPDATE)
+ * @dbProcedures sp_upload_image
+ * @dbRelations experience_images.experience_id->experiences.id, blog_images.post_id->blog_posts.id, profiles.user_id->users.id
+ */
 import { uploadImage as _uploadImage } from "./utils/uploadImage.js";
+
+/**
+ * @description Valida cupom de desconto
+ * @category Utils
+ * @inputModel {
+ *   code: string,
+ *   experienceId: string,
+ *   date: string
+ * }
+ * @dbTables coupons(SELECT), coupon_usages(SELECT), experiences(SELECT)
+ * @dbProcedures sp_validate_coupon
+ * @dbRelations coupons.experience_id->experiences.id, coupons.id->coupon_usages.coupon_id
+ */
 import { validateCoupon as _validateCoupon } from "./utils/validateCoupon.js";
 
 // Adicionar metadados e re-exportar
@@ -121,6 +1465,12 @@ _getAuditLogs.metadata = {
     page: 1,
     limit: 50,
   },
+
+  supabaseInfos: {
+    dbTables: "audit_logs(SELECT), users(SELECT)",
+    dbProcedures: "sp_get_audit_logs",
+    dbRelations: "audit_logs.user_id->users.id",
+  },
 };
 
 export const getAuditLogs = _getAuditLogs;
@@ -133,6 +1483,14 @@ _getDashboardStats.metadata = {
     startDate: "2023-01-01",
     endDate: "2023-12-31",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), users(SELECT), experiences(SELECT), reviews(SELECT), payments(SELECT)",
+    dbProcedures: "sp_get_dashboard_stats",
+    dbRelations:
+      "bookings.user_id->users.id, bookings.experience_id->experiences.id, reviews.booking_id->bookings.id, payments.booking_id->bookings.id",
+  },
 };
 
 export const getDashboardStats = _getDashboardStats;
@@ -141,6 +1499,12 @@ _getSystemHealth.metadata = {
   description: " Verificar saúde do sistema",
   category: " admin",
   inputModel: { checkDatabase: true, checkStorage: true, checkPayments: true },
+
+  supabaseInfos: {
+    dbTables: "system_health(SELECT), system_logs(SELECT)",
+    dbProcedures: "sp_check_system_health",
+    dbRelations: "system_health.log_id->system_logs.id",
+  },
 };
 
 export const getSystemHealth = _getSystemHealth;
@@ -155,6 +1519,12 @@ _listUsers.metadata = {
     page: 1,
     limit: 20,
   },
+
+  supabaseInfos: {
+    dbTables: "users(SELECT), user_roles(SELECT), profiles(SELECT)",
+    dbProcedures: "sp_list_users",
+    dbRelations: "users.id->profiles.user_id, users.role_id->user_roles.id",
+  },
 };
 
 export const listUsers = _listUsers;
@@ -168,6 +1538,13 @@ _manageCategories.metadata = {
     name: "Nova Categoria",
     slug: "nova-categoria",
     icon: "icon-name",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "categories(SELECT,INSERT,UPDATE,DELETE), experiences_categories(SELECT,UPDATE)",
+    dbProcedures: "sp_manage_categories",
+    dbRelations: "categories.id->experiences_categories.category_id",
   },
 };
 
@@ -185,6 +1562,13 @@ _manageLocations.metadata = {
     latitude: -23.55052,
     longitude: -46.633308,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "locations(SELECT,INSERT,UPDATE,DELETE), experiences_locations(SELECT,UPDATE)",
+    dbProcedures: "sp_manage_locations",
+    dbRelations: "locations.id->experiences_locations.location_id",
+  },
 };
 
 export const manageLocations = _manageLocations;
@@ -196,6 +1580,12 @@ _updateUserStatus.metadata = {
     userId: "user_123",
     isActive: false,
     reason: "Conta suspensa por violação dos termos",
+  },
+
+  supabaseInfos: {
+    dbTables: "users(SELECT,UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_update_user_status",
+    dbRelations: "audit_logs.user_id->users.id",
   },
 };
 
@@ -209,6 +1599,12 @@ _changePassword.metadata = {
     newPassword: "novaSenha",
     confirmPassword: "novaSenha",
   },
+
+  supabaseInfos: {
+    dbTables: "users(SELECT,UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_change_password",
+    dbRelations: "audit_logs.user_id->users.id",
+  },
 };
 
 export const changePassword = _changePassword;
@@ -217,6 +1613,14 @@ _deleteAccount.metadata = {
   description: " Excluir conta (com anonimização)",
   category: " auth",
   inputModel: { password: "senha123", reason: "Motivo da exclusão" },
+
+  supabaseInfos: {
+    dbTables:
+      "users(SELECT,UPDATE), profiles(UPDATE), bookings(UPDATE), experiences(UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_delete_account",
+    dbRelations:
+      "users.id->profiles.user_id, users.id->bookings.user_id, users.id->experiences.guide_id, audit_logs.user_id->users.id",
+  },
 };
 
 export const deleteAccount = _deleteAccount;
@@ -225,6 +1629,12 @@ _login.metadata = {
   description: " Autenticar usuário",
   category: " auth",
   inputModel: { email: "usuario@exemplo.com", password: "senha123" },
+
+  supabaseInfos: {
+    dbTables: "users(SELECT,UPDATE), audit_logs(INSERT), sessions(INSERT)",
+    dbProcedures: "sp_user_login",
+    dbRelations: "sessions.user_id->users.id, audit_logs.user_id->users.id",
+  },
 };
 
 export const login = _login;
@@ -233,6 +1643,12 @@ _logout.metadata = {
   description: " Encerrar sessão do usuário",
   category: " auth",
   inputModel: {},
+
+  supabaseInfos: {
+    dbTables: "sessions(UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_user_logout",
+    dbRelations: "sessions.user_id->users.id, audit_logs.user_id->users.id",
+  },
 };
 
 export const logout = _logout;
@@ -246,6 +1662,14 @@ _register.metadata = {
     fullName: "Nome Completo",
     userType: "tourist", // ou 'guide'
   },
+
+  supabaseInfos: {
+    dbTables:
+      "users(INSERT), profiles(INSERT), user_settings(INSERT), audit_logs(INSERT)",
+    dbProcedures: "sp_register_user",
+    dbRelations:
+      "users.id->profiles.user_id, users.id->user_settings.user_id, audit_logs.user_id->users.id",
+  },
 };
 
 export const register = _register;
@@ -254,6 +1678,14 @@ _resetPassword.metadata = {
   description: " Solicitar/confirmar redefinição de senha",
   category: " auth",
   inputModel: { email: "usuario@exemplo.com" },
+
+  supabaseInfos: {
+    dbTables:
+      "users(SELECT,UPDATE), password_reset_tokens(SELECT,UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_reset_password",
+    dbRelations:
+      "password_reset_tokens.user_id->users.id, audit_logs.user_id->users.id",
+  },
 };
 
 export const resetPassword = _resetPassword;
@@ -262,6 +1694,13 @@ _saveConsent.metadata = {
   description: " Salvar consentimentos LGPD",
   category: " auth",
   inputModel: { marketing: true, analytics: true, thirdParty: false },
+
+  supabaseInfos: {
+    dbTables: "user_consents(INSERT,UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_save_user_consent",
+    dbRelations:
+      "user_consents.user_id->users.id, audit_logs.user_id->users.id",
+  },
 };
 
 export const saveConsent = _saveConsent;
@@ -276,6 +1715,13 @@ _updatePreferences.metadata = {
       push: false,
     },
   },
+
+  supabaseInfos: {
+    dbTables: "user_settings(SELECT,UPDATE), audit_logs(INSERT)",
+    dbProcedures: "sp_update_user_preferences",
+    dbRelations:
+      "user_settings.user_id->users.id, audit_logs.user_id->users.id",
+  },
 };
 
 export const updatePreferences = _updatePreferences;
@@ -287,6 +1733,12 @@ _updateProfile.metadata = {
     fullName: "Nome Atualizado",
     phone: "11999999999",
     bio: "Breve descrição sobre mim",
+  },
+
+  supabaseInfos: {
+    dbTables: "profiles(SELECT,UPDATE), users(SELECT), audit_logs(INSERT)",
+    dbProcedures: "sp_update_user_profile",
+    dbRelations: "profiles.user_id->users.id, audit_logs.user_id->users.id",
   },
 };
 
@@ -302,6 +1754,13 @@ _addException.metadata = {
     isAvailable: false,
     reason: "Feriado de Natal",
   },
+
+  supabaseInfos: {
+    dbTables: "availability_exceptions(INSERT), guides(SELECT)",
+    dbProcedures: "sp_add_availability_exception",
+    dbRelations:
+      "availability_exceptions.guide_id->guides.id, guides.user_id->users.id",
+  },
 };
 
 export const addException = _addException;
@@ -314,6 +1773,14 @@ _addTimeBlock.metadata = {
     dayOfWeek: 1, // 0 = Domingo, 1 = Segunda, etc.
     startTime: "09:00",
     endTime: "17:00",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "availability_time_blocks(INSERT), availability_templates(SELECT), guides(SELECT)",
+    dbProcedures: "sp_add_time_block",
+    dbRelations:
+      "availability_time_blocks.template_id->availability_templates.id, availability_templates.guide_id->guides.id, guides.user_id->users.id",
   },
 };
 
@@ -328,6 +1795,13 @@ _createAvailabilityTemplate.metadata = {
     name: "Horário Padrão",
     isActive: true,
   },
+
+  supabaseInfos: {
+    dbTables: "availability_templates(INSERT), guides(SELECT)",
+    dbProcedures: "sp_create_availability_template",
+    dbRelations:
+      "availability_templates.guide_id->guides.id, guides.user_id->users.id",
+  },
 };
 
 export const createAvailabilityTemplate = _createAvailabilityTemplate;
@@ -341,6 +1815,14 @@ _getAvailableDates.metadata = {
     startDate: "2023-06-01",
     endDate: "2023-06-30",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT), availability_exceptions(SELECT), bookings(SELECT)",
+    dbProcedures: "sp_get_available_dates",
+    dbRelations:
+      "experiences.guide_id->guides.id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id, guides.id->availability_exceptions.guide_id, experiences.id->bookings.experience_id",
+  },
 };
 
 export const getAvailableDates = _getAvailableDates;
@@ -353,6 +1835,14 @@ _getAvailableTimes.metadata = {
     experienceId: "exp_123",
     date: "2023-06-15",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT), availability_exceptions(SELECT), bookings(SELECT)",
+    dbProcedures: "sp_get_available_times",
+    dbRelations:
+      "experiences.guide_id->guides.id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id, guides.id->availability_exceptions.guide_id, experiences.id->bookings.experience_id",
+  },
 };
 
 export const getAvailableTimes = _getAvailableTimes;
@@ -361,6 +1851,13 @@ _removeException.metadata = {
   description: " Remover exceção de disponibilidade",
   category: " availability",
   inputModel: { exceptionId: "exception_123" },
+
+  supabaseInfos: {
+    dbTables: "availability_exceptions(SELECT,DELETE), guides(SELECT)",
+    dbProcedures: "sp_remove_availability_exception",
+    dbRelations:
+      "availability_exceptions.guide_id->guides.id, guides.user_id->users.id",
+  },
 };
 
 export const removeException = _removeException;
@@ -369,6 +1866,14 @@ _removeTimeBlock.metadata = {
   description: " Remover bloco de horário",
   category: " availability",
   inputModel: { blockId: "block_123" },
+
+  supabaseInfos: {
+    dbTables:
+      "availability_time_blocks(SELECT,DELETE), availability_templates(SELECT), guides(SELECT)",
+    dbProcedures: "sp_remove_time_block",
+    dbRelations:
+      "availability_time_blocks.template_id->availability_templates.id, availability_templates.guide_id->guides.id, guides.user_id->users.id",
+  },
 };
 
 export const removeTimeBlock = _removeTimeBlock;
@@ -381,6 +1886,13 @@ _updateAvailabilityTemplate.metadata = {
     name: "Horário de Verão",
     isActive: true,
   },
+
+  supabaseInfos: {
+    dbTables: "availability_templates(SELECT,UPDATE), guides(SELECT)",
+    dbProcedures: "sp_update_availability_template",
+    dbRelations:
+      "availability_templates.guide_id->guides.id, guides.user_id->users.id",
+  },
 };
 
 export const updateAvailabilityTemplate = _updateAvailabilityTemplate;
@@ -389,14 +1901,22 @@ _createPost.metadata = {
   description: " Criar novo post",
   category: " blog",
   inputModel: {
-    title: "Título do Post",
-    content: "Conteúdo completo do post em formato markdown ou HTML",
-    excerpt: "Breve resumo do post",
-    coverImage: [File], // Arquivo de upload
-    authorId: "author_123",
-    category: "Dicas de Viagem",
-    tags: ["viagem", "dicas", "turismo"],
+    title: "Post Title",
+    content: "Full post content in markdown or HTML format",
+    excerpt: "Brief summary of the post",
+    coverImage: "[File]", // Upload file for Cloudinary
+    galleryImages: ["[File]"], // Array of files for gallery in Cloudinary
+    videoUrl: "https://www.youtube.com/watch?v=example123", // YouTube video URL
+    category: "Travel Tips",
+    tags: ["travel", "tips", "tourism"],
     published: false,
+  },
+
+  supabaseInfos: {
+    dbTables: "blog_posts(INSERT), blog_tags(INSERT), blog_post_tags(INSERT)",
+    dbProcedures: "none",
+    dbRelations:
+      "blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id",
   },
 };
 
@@ -405,7 +1925,17 @@ export const createPost = _createPost;
 _deletePost.metadata = {
   description: " Excluir post",
   category: " blog",
-  inputModel: { postId: "post_123" },
+  inputModel: {
+    postId: "7c54946f-a6f1-454c-9eec-878c2852944f",
+    softDelete: true,
+    deleteImages: true,
+  },
+
+  supabaseInfos: {
+    dbTables: "blog_posts(SELECT,UPDATE), blog_post_tags(DELETE)",
+    dbProcedures: "none",
+    dbRelations: "blog_posts.id->blog_post_tags.post_id",
+  },
 };
 
 export const deletePost = _deletePost;
@@ -414,6 +1944,14 @@ _getPostDetails.metadata = {
   description: " Obter detalhes de um post",
   category: " blog",
   inputModel: { slug: "titulo-do-post" },
+
+  supabaseInfos: {
+    dbTables:
+      "blog_posts(SELECT), blog_tags(SELECT), blog_post_tags(SELECT), users(SELECT)",
+    dbProcedures: "sp_get_post_details",
+    dbRelations:
+      "blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id",
+  },
 };
 
 export const getPostDetails = _getPostDetails;
@@ -424,64 +1962,50 @@ _listPosts.metadata = {
   inputModel: {
     category: "Dicas de Viagem",
     tag: "viagem",
-    authorId: "author_123",
     published: true,
     page: 1,
     limit: 10,
     sortBy: "date", // 'date', 'title', 'popularity'
     sortOrder: "desc", // 'asc', 'desc'
   },
-};
 
-export const listPosts = _listPosts;
-
-_publishPost.metadata = {
-  description: " Publicar post",
-  category: " blog",
-  inputModel: {
-    postId: "post_123",
-    scheduledDate: "2023-06-15T10:00:00Z", // Opcional, para agendamento
+  supabaseInfos: {
+    dbTables:
+      "blog_posts(SELECT), blog_tags(SELECT), blog_post_tags(SELECT), users(SELECT)",
+    dbProcedures: "sp_list_blog_posts",
+    dbRelations:
+      "blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id",
   },
 };
 
-export const publishPost = _publishPost;
-
-_unpublishPost.metadata = {
-  description: " Despublicar post",
-  category: " blog",
-  inputModel: { postId: "post_123", reason: "Conteúdo desatualizado" },
-};
-
-export const unpublishPost = _unpublishPost;
+export const listPosts = _listPosts;
 
 _updatePost.metadata = {
   description: " Atualizar post",
   category: " blog",
   inputModel: {
-    postId: "post_123",
-    title: "Título Atualizado",
-    content: "Conteúdo atualizado",
-    excerpt: "Novo resumo",
-    coverImage: [File], // Opcional
-    category: "Nova Categoria",
-    tags: ["novos", "tags"],
+    id: "post_123",
+    title: "Post Title",
+    content: "Full post content in markdown or HTML format",
+    excerpt: "Brief summary of the post",
+    coverImage: "[File]", // Upload file for Cloudinary
+    galleryImages: ["[File]"], // Array of files for gallery in Cloudinary
+    videoUrl: "https://www.youtube.com/watch?v=example123", // YouTube video URL
+    category: "Travel Tips",
+    tags: ["travel", "tips", "tourism"],
+    published: false,
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "blog_posts(SELECT,UPDATE), blog_tags(SELECT,INSERT), blog_post_tags(DELETE,INSERT)",
+    dbProcedures: "sp_update_blog_post",
+    dbRelations:
+      "blog_posts.id->blog_post_tags.post_id, blog_tags.id->blog_post_tags.tag_id, blog_posts.author_id->users.id",
   },
 };
 
 export const updatePost = _updatePost;
-
-_uploadPostImage.metadata = {
-  description: " Enviar imagem para o post",
-  category: " blog",
-  inputModel: {
-    postId: "post_123",
-    image: [File],
-    caption: "Legenda da imagem",
-    altText: "Texto alternativo para acessibilidade",
-  },
-};
-
-export const uploadPostImage = _uploadPostImage;
 
 _calculateBookingPrice.metadata = {
   description: " Calcular preço da reserva",
@@ -492,6 +2016,14 @@ _calculateBookingPrice.metadata = {
     adultCount: 2,
     teenagerCount: 1,
     childCount: 0,
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), experience_pricing(SELECT), experience_addons(SELECT), coupons(SELECT)",
+    dbProcedures: "sp_calculate_booking_price",
+    dbRelations:
+      "experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, coupons.experience_id->experiences.id",
   },
 };
 
@@ -505,6 +2037,14 @@ _cancelBooking.metadata = {
     reason: "Mudança de planos",
     requestRefund: true,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT,UPDATE), payments(SELECT,UPDATE), refunds(INSERT), notifications(INSERT)",
+    dbProcedures: "sp_cancel_booking",
+    dbRelations:
+      "bookings.id->payments.booking_id, payments.id->refunds.payment_id, bookings.user_id->notifications.user_id",
+  },
 };
 
 export const cancelBooking = _cancelBooking;
@@ -515,6 +2055,13 @@ _completeBooking.metadata = {
   inputModel: {
     bookingId: "booking_123",
     notes: "Experiência realizada com sucesso",
+  },
+
+  supabaseInfos: {
+    dbTables: "bookings(SELECT,UPDATE), notifications(INSERT)",
+    dbProcedures: "sp_complete_booking",
+    dbRelations:
+      "bookings.user_id->notifications.user_id, bookings.guide_id->guides.id",
   },
 };
 
@@ -527,6 +2074,13 @@ _confirmBooking.metadata = {
     bookingId: "booking_123",
     paymentIntentId: "pi_123456",
     paymentMethod: "card",
+  },
+
+  supabaseInfos: {
+    dbTables: "bookings(SELECT,UPDATE), notifications(INSERT)",
+    dbProcedures: "sp_confirm_booking",
+    dbRelations:
+      "bookings.user_id->notifications.user_id, bookings.guide_id->guides.id",
   },
 };
 
@@ -553,6 +2107,14 @@ _createBooking.metadata = {
     hotel: "Hotel Central",
     specialRequests: "Tenho restrições alimentares",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(INSERT), booking_addons(INSERT), experiences(SELECT), guides(SELECT), availability_exceptions(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT)",
+    dbProcedures: "sp_create_booking",
+    dbRelations:
+      "bookings.experience_id->experiences.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, guides.id->availability_exceptions.guide_id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id",
+  },
 };
 
 export const createBooking = _createBooking;
@@ -561,6 +2123,14 @@ _getBookingDetails.metadata = {
   description: " Obter detalhes de uma reserva",
   category: " bookings",
   inputModel: { bookingId: "booking_123" },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), booking_addons(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT)",
+    dbProcedures: "sp_get_booking_details",
+    dbRelations:
+      "bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, bookings.id->payments.booking_id",
+  },
 };
 
 export const getBookingDetails = _getBookingDetails;
@@ -576,6 +2146,14 @@ _listBookings.metadata = {
     endDate: "2023-06-30",
     page: 1,
     limit: 10,
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)",
+    dbProcedures: "sp_list_bookings",
+    dbRelations:
+      "bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id",
   },
 };
 
@@ -595,6 +2173,14 @@ _processPayment.metadata = {
     },
     savePaymentMethod: true,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT,UPDATE), payments(INSERT), payment_details(INSERT)",
+    dbProcedures: "sp_process_payment",
+    dbRelations:
+      "bookings.id->payments.booking_id, payments.id->payment_details.payment_id",
+  },
 };
 
 export const processPayment = _processPayment;
@@ -606,6 +2192,14 @@ _sendBookingConfirmation.metadata = {
     bookingId: "booking_123",
     sendTo: "email", // 'email', 'sms', 'both'
     language: "pt-BR",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), users(SELECT), experiences(SELECT), guides(SELECT), email_logs(INSERT)",
+    dbProcedures: "sp_send_booking_confirmation",
+    dbRelations:
+      "bookings.user_id->users.id, bookings.experience_id->experiences.id, experiences.guide_id->guides.id, users.id->email_logs.user_id",
   },
 };
 
@@ -623,6 +2217,14 @@ _updateBooking.metadata = {
     childCount: 0,
     specialRequests: "Atualização dos pedidos especiais",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT,UPDATE), booking_addons(DELETE,INSERT), experiences(SELECT), guides(SELECT), availability_exceptions(SELECT), availability_templates(SELECT), availability_time_blocks(SELECT)",
+    dbProcedures: "sp_update_booking",
+    dbRelations:
+      "bookings.experience_id->experiences.id, experiences.guide_id->guides.id, bookings.id->booking_addons.booking_id, guides.id->availability_exceptions.guide_id, guides.id->availability_templates.guide_id, availability_templates.id->availability_time_blocks.template_id",
+  },
 };
 
 export const updateBooking = _updateBooking;
@@ -635,6 +2237,13 @@ _createChat.metadata = {
     guideId: "guide_123",
     initialMessage: "Olá, gostaria de saber mais sobre suas experiências.",
   },
+
+  supabaseInfos: {
+    dbTables: "chats(INSERT), chat_messages(INSERT), users(SELECT)",
+    dbProcedures: "sp_create_chat",
+    dbRelations:
+      "chats.user1_id->users.id, chats.user2_id->users.id, chats.id->chat_messages.chat_id",
+  },
 };
 
 export const createChat = _createChat;
@@ -643,6 +2252,13 @@ _getChatMessages.metadata = {
   description: " Obter mensagens de uma conversa",
   category: " chats",
   inputModel: { chatId: "chat_123", page: 1, limit: 50 },
+
+  supabaseInfos: {
+    dbTables: "chats(SELECT), chat_messages(SELECT), users(SELECT)",
+    dbProcedures: "sp_get_chat_messages",
+    dbRelations:
+      "chats.id->chat_messages.chat_id, chat_messages.sender_id->users.id",
+  },
 };
 
 export const getChatMessages = _getChatMessages;
@@ -656,6 +2272,13 @@ _listChats.metadata = {
     page: 1,
     limit: 20,
   },
+
+  supabaseInfos: {
+    dbTables: "chats(SELECT), chat_messages(SELECT), users(SELECT)",
+    dbProcedures: "sp_list_user_chats",
+    dbRelations:
+      "chats.user1_id->users.id, chats.user2_id->users.id, chats.id->chat_messages.chat_id",
+  },
 };
 
 export const listChats = _listChats;
@@ -667,6 +2290,12 @@ _markAsRead.metadata = {
     chatId: "chat_123",
     userId: "user_123",
     userType: "guide", // 'tourist' ou 'guide'
+  },
+
+  supabaseInfos: {
+    dbTables: "chat_messages(SELECT,UPDATE)",
+    dbProcedures: "sp_mark_messages_as_read",
+    dbRelations: "chat_messages.chat_id->chats.id",
   },
 };
 
@@ -680,6 +2309,13 @@ _sendMessage.metadata = {
     senderId: "user_123",
     senderType: "tourist", // 'tourist' ou 'guide'
     message: "Mensagem de texto aqui",
+  },
+
+  supabaseInfos: {
+    dbTables: "chats(SELECT), chat_messages(INSERT), chat_attachments(INSERT)",
+    dbProcedures: "sp_send_chat_message",
+    dbRelations:
+      "chats.id->chat_messages.chat_id, chat_messages.id->chat_attachments.message_id",
   },
 };
 
@@ -696,6 +2332,12 @@ _addItineraryItem.metadata = {
     duration: 90, // minutos
     orderNum: 2,
   },
+
+  supabaseInfos: {
+    dbTables: "experiences(SELECT), itinerary_items(INSERT)",
+    dbProcedures: "sp_add_itinerary_item",
+    dbRelations: "experiences.id->itinerary_items.experience_id",
+  },
 };
 
 export const addItineraryItem = _addItineraryItem;
@@ -710,6 +2352,14 @@ _cloneExperience.metadata = {
       duration: 5,
       meetingPoint: "Novo ponto de encontro",
     },
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT,INSERT), itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT  itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT), experience_images(SELECT,INSERT)",
+    dbProcedures: "sp_clone_experience",
+    dbRelations:
+      "experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id",
   },
 };
 
@@ -731,6 +2381,14 @@ _createCustomExperience.metadata = {
     specialRequests: "Gostaria de incluir uma parada para almoço",
     duration: 6, // horas
     locationId: "location_123",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(INSERT), experience_pricing(INSERT), guides(SELECT), locations(SELECT)",
+    dbProcedures: "sp_create_custom_experience",
+    dbRelations:
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id",
   },
 };
 
@@ -766,6 +2424,14 @@ _createExperience.metadata = {
       },
     ],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(INSERT), experience_pricing(INSERT), experience_categories(INSERT), experience_languages(INSERT), experience_included_items(INSERT), experience_excluded_items(INSERT), guides(SELECT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_create_experience",
+    dbRelations:
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experience_categories.category_id->categories.id",
+  },
 };
 
 export const createExperience = _createExperience;
@@ -774,6 +2440,14 @@ _deleteExperience.metadata = {
   description: " Excluir experiência",
   category: " experiences",
   inputModel: { experienceId: "exp_123", reason: "Experiência descontinuada" },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT,UPDATE), itinerary_items(UPDATE), experience_pricing(UPDATE), experience_addons(UPDATE), experience_images(UPDATE), experience_categories(UPDATE), experience_languages(UPDATE)",
+    dbProcedures: "sp_delete_experience",
+    dbRelations:
+      "experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id",
+  },
 };
 
 export const deleteExperience = _deleteExperience;
@@ -782,6 +2456,12 @@ _deleteItineraryItem.metadata = {
   description: " Remover item do itinerário",
   category: " experiences",
   inputModel: { itemId: "item_123" },
+
+  supabaseInfos: {
+    dbTables: "itinerary_items(SELECT,DELETE), experiences(SELECT)",
+    dbProcedures: "sp_delete_itinerary_item",
+    dbRelations: "itinerary_items.experience_id->experiences.id",
+  },
 };
 
 export const deleteItineraryItem = _deleteItineraryItem;
@@ -792,6 +2472,14 @@ _getExperienceDetails.metadata = {
   inputModel: {
     experienceId: "exp_123",
     language: "pt-BR", // Idioma para tradução, se disponível
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), itinerary_items(SELECT), experience_pricing(SELECT), experience_addons(SELECT), experience_images(SELECT), experience_categories(SELECT), experience_languages(SELECT), experience_included_items(SELECT), experience_excluded_items(SELECT), guides(SELECT), locations(SELECT), categories(SELECT), reviews(SELECT)",
+    dbProcedures: "sp_get_experience_details",
+    dbRelations:
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experiences.id->reviews.experience_id",
   },
 };
 
@@ -814,6 +2502,14 @@ _listExperiences.metadata = {
     sortBy: "price", // 'price', 'duration', 'rating'
     sortOrder: "asc", // 'asc', 'desc'
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), experience_pricing(SELECT), experience_categories(SELECT), guides(SELECT), locations(SELECT), categories(SELECT), reviews(SELECT)",
+    dbProcedures: "sp_list_experiences",
+    dbRelations:
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->reviews.experience_id",
+  },
 };
 
 export const listExperiences = _listExperiences;
@@ -832,6 +2528,14 @@ _translateExperience.metadata = {
       servicesNotIncluded: ["Bebidas alcohólicas"],
       meetingPoint: "Punto de encuentro",
     },
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT,INSERT), experience_translations(INSERT), itinerary_items(SELECT), itinerary_item_translations(INSERT)",
+    dbProcedures: "sp_translate_experience",
+    dbRelations:
+      "experiences.id->experience_translations.experience_id, experiences.id->itinerary_items.experience_id, itinerary_items.id->itinerary_item_translations.item_id",
   },
 };
 
@@ -861,6 +2565,14 @@ _updateExperience.metadata = {
     transportMode: "Van",
     isActive: true,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT,UPDATE), experience_categories(DELETE,INSERT), experience_languages(DELETE,INSERT), experience_included_items(DELETE,INSERT), experience_excluded_items(DELETE,INSERT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_update_experience",
+    dbRelations:
+      "experiences.location_id->locations.id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id",
+  },
 };
 
 export const updateExperience = _updateExperience;
@@ -872,6 +2584,12 @@ _updateExperienceStatus.metadata = {
     experienceId: "exp_123",
     isActive: true,
     reason: "Retomando operação após temporada",
+  },
+
+  supabaseInfos: {
+    dbTables: "experiences(SELECT,UPDATE), experience_status_history(INSERT)",
+    dbProcedures: "sp_update_experience_status",
+    dbRelations: "experiences.id->experience_status_history.experience_id",
   },
 };
 
@@ -887,6 +2605,12 @@ _updateItineraryItem.metadata = {
     startTime: "10:30",
     duration: 120, // minutos
     orderNum: 3,
+  },
+
+  supabaseInfos: {
+    dbTables: "itinerary_items(SELECT,UPDATE), experiences(SELECT)",
+    dbProcedures: "sp_update_itinerary_item",
+    dbRelations: "itinerary_items.experience_id->experiences.id",
   },
 };
 
@@ -915,6 +2639,14 @@ _updatePricing.metadata = {
       },
     ],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experience_pricing(SELECT,UPDATE), experience_addons(DELETE,INSERT), experiences(SELECT)",
+    dbProcedures: "sp_update_experience_pricing",
+    dbRelations:
+      "experience_pricing.experience_id->experiences.id, experiences.id->experience_addons.experience_id",
+  },
 };
 
 export const updatePricing = _updatePricing;
@@ -931,6 +2663,12 @@ _uploadExperienceImages.metadata = {
       "image2.jpg": "Descrição da imagem 2",
     },
   },
+
+  supabaseInfos: {
+    dbTables: "experiences(SELECT,UPDATE), experience_images(INSERT)",
+    dbProcedures: "sp_upload_experience_images",
+    dbRelations: "experiences.id->experience_images.experience_id",
+  },
 };
 
 export const uploadExperienceImages = _uploadExperienceImages;
@@ -943,6 +2681,12 @@ _completeOnboarding.metadata = {
     data: {
       // Dados específicos do passo
     },
+  },
+
+  supabaseInfos: {
+    dbTables: "guides(SELECT,UPDATE), guide_onboarding(INSERT,UPDATE)",
+    dbProcedures: "sp_complete_guide_onboarding",
+    dbRelations: "guides.id->guide_onboarding.guide_id",
   },
 };
 
@@ -959,6 +2703,14 @@ _createGuideProfile.metadata = {
     specialties: ["História", "Gastronomia"],
     certifications: ["Guia de Turismo MTur"],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(INSERT), guide_languages(INSERT), guide_specialties(INSERT), guide_certifications(INSERT), users(SELECT)",
+    dbProcedures: "sp_create_guide_profile",
+    dbRelations:
+      "guides.user_id->users.id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id",
+  },
 };
 
 export const createGuideProfile = _createGuideProfile;
@@ -967,6 +2719,14 @@ _getGuideDetails.metadata = {
   description: " Obter detalhes de um guia",
   category: " guides",
   inputModel: { guideId: "guide_123" },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT), guide_languages(SELECT), guide_specialties(SELECT), guide_certifications(SELECT), users(SELECT), profiles(SELECT), experiences(SELECT), reviews(SELECT)",
+    dbProcedures: "sp_get_guide_details",
+    dbRelations:
+      "guides.user_id->users.id, users.id->profiles.user_id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id, guides.id->experiences.guide_id, guides.id->reviews.guide_id",
+  },
 };
 
 export const getGuideDetails = _getGuideDetails;
@@ -977,6 +2737,14 @@ _getGuideStats.metadata = {
   inputModel: {
     guideId: "guide_123",
     period: "month", // 'week', 'month', 'year'
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT), bookings(SELECT), experiences(SELECT), reviews(SELECT), payments(SELECT)",
+    dbProcedures: "sp_get_guide_stats",
+    dbRelations:
+      "guides.id->experiences.guide_id, experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, bookings.id->payments.booking_id",
   },
 };
 
@@ -992,6 +2760,14 @@ _listGuides.metadata = {
     page: 1,
     limit: 10,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT), users(SELECT), profiles(SELECT), guide_languages(SELECT), guide_specialties(SELECT), experiences(SELECT), locations(SELECT), reviews(SELECT)",
+    dbProcedures: "sp_list_guides",
+    dbRelations:
+      "guides.user_id->users.id, users.id->profiles.user_id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->experiences.guide_id, experiences.location_id->locations.id, guides.id->reviews.guide_id",
+  },
 };
 
 export const listGuides = _listGuides;
@@ -1000,6 +2776,12 @@ _updateCommissionRate.metadata = {
   description: " Atualizar taxa de comissão (admin)",
   category: " guides",
   inputModel: { guideId: "guide_123", commissionRate: 75 },
+
+  supabaseInfos: {
+    dbTables: "guides(SELECT,UPDATE), commission_history(INSERT)",
+    dbProcedures: "sp_update_guide_commission",
+    dbRelations: "guides.id->commission_history.guide_id",
+  },
 };
 
 export const updateCommissionRate = _updateCommissionRate;
@@ -1015,6 +2797,14 @@ _updateGuideProfile.metadata = {
     specialties: ["História", "Aventura"],
     certifications: ["Guia de Turismo MTur", "Primeiros Socorros"],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT,UPDATE), guide_languages(DELETE,INSERT), guide_specialties(DELETE,INSERT)",
+    dbProcedures: "sp_update_guide_profile",
+    dbRelations:
+      "guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id",
+  },
 };
 
 export const updateGuideProfile = _updateGuideProfile;
@@ -1028,6 +2818,12 @@ _uploadCertifications.metadata = {
     expiryDate: "2025-01-15",
     certificateFile: [File], // Arquivo de upload
   },
+
+  supabaseInfos: {
+    dbTables: "guides(SELECT), guide_certifications(INSERT)",
+    dbProcedures: "sp_upload_guide_certifications",
+    dbRelations: "guides.id->guide_certifications.guide_id",
+  },
 };
 
 export const uploadCertifications = _uploadCertifications;
@@ -1039,6 +2835,14 @@ _verifyGuide.metadata = {
     guideId: "guide_123",
     verified: true,
     notes: "Documentação verificada",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT,UPDATE), guide_verification_history(INSERT), notifications(INSERT)",
+    dbProcedures: "sp_verify_guide",
+    dbRelations:
+      "guides.id->guide_verification_history.guide_id, guides.user_id->notifications.user_id",
   },
 };
 
@@ -1055,6 +2859,14 @@ _enrollInTemplate.metadata = {
       price: 150, // Preço personalizado
     },
   },
+
+  supabaseInfos: {
+    dbTables:
+      "template_enrollments(INSERT), experience_templates(SELECT), guides(SELECT)",
+    dbProcedures: "sp_enroll_in_template",
+    dbRelations:
+      "template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id",
+  },
 };
 
 export const enrollInTemplate = _enrollInTemplate;
@@ -1063,6 +2875,14 @@ _getTemplateDetails.metadata = {
   description: " Obter detalhes de um template",
   category: " marketplace",
   inputModel: { templateId: "template_123" },
+
+  supabaseInfos: {
+    dbTables:
+      "experience_templates(SELECT), template_itinerary_items(SELECT), template_pricing(SELECT), template_addons(SELECT), template_images(SELECT), template_categories(SELECT), template_languages(SELECT), template_included_items(SELECT), template_excluded_items(SELECT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_get_template_details",
+    dbRelations:
+      "experience_templates.location_id->locations.id, experience_templates.id->template_itinerary_items.template_id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_addons.template_id, experience_templates.id->template_images.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id, experience_templates.id->template_languages.template_id, experience_templates.id->template_included_items.template_id, experience_templates.id->template_excluded_items.template_id",
+  },
 };
 
 export const getTemplateDetails = _getTemplateDetails;
@@ -1071,6 +2891,14 @@ _listEnrolledTemplates.metadata = {
   description: " Listar templates inscritos",
   category: " marketplace",
   inputModel: { guideId: "guide_123", page: 1, limit: 10 },
+
+  supabaseInfos: {
+    dbTables:
+      "template_enrollments(SELECT), experience_templates(SELECT), guides(SELECT)",
+    dbProcedures: "sp_list_enrolled_templates",
+    dbRelations:
+      "template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id",
+  },
 };
 
 export const listEnrolledTemplates = _listEnrolledTemplates;
@@ -1086,6 +2914,14 @@ _listTemplateExperiences.metadata = {
     page: 1,
     limit: 10,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experience_templates(SELECT), template_pricing(SELECT), template_categories(SELECT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_list_template_experiences",
+    dbRelations:
+      "experience_templates.location_id->locations.id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id",
+  },
 };
 
 export const listTemplateExperiences = _listTemplateExperiences;
@@ -1098,6 +2934,14 @@ _unenrollFromTemplate.metadata = {
     templateId: "template_123",
     reason: "Não ofereço mais este tipo de experiência",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "template_enrollments(SELECT,DELETE), experience_templates(SELECT), guides(SELECT)",
+    dbProcedures: "sp_unenroll_from_template",
+    dbRelations:
+      "template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id",
+  },
 };
 
 export const unenrollFromTemplate = _unenrollFromTemplate;
@@ -1106,6 +2950,12 @@ _getUnreadNotifications.metadata = {
   description: " Obter notificações não lidas",
   category: " notifications",
   inputModel: { userId: "user_123", limit: 20 },
+
+  supabaseInfos: {
+    dbTables: "notifications(SELECT), users(SELECT)",
+    dbProcedures: "sp_get_unread_notifications",
+    dbRelations: "notifications.user_id->users.id",
+  },
 };
 
 export const getUnreadNotifications = _getUnreadNotifications;
@@ -1114,6 +2964,12 @@ _markNotificationAsRead.metadata = {
   description: " Marcar notificação como lida",
   category: " notifications",
   inputModel: { notificationId: "notification_123", userId: "user_123" },
+
+  supabaseInfos: {
+    dbTables: "notifications(SELECT,UPDATE)",
+    dbProcedures: "sp_mark_notification_as_read",
+    dbRelations: "notifications.user_id->users.id",
+  },
 };
 
 export const markNotificationAsRead = _markNotificationAsRead;
@@ -1131,6 +2987,12 @@ _sendNotification.metadata = {
       experienceId: "exp_123",
     },
     channels: ["email", "push", "in_app"],
+  },
+
+  supabaseInfos: {
+    dbTables: "notifications(INSERT), users(SELECT)",
+    dbProcedures: "sp_send_notification",
+    dbRelations: "notifications.user_id->users.id",
   },
 };
 
@@ -1159,6 +3021,12 @@ _updateNotificationPreferences.metadata = {
       },
     },
   },
+
+  supabaseInfos: {
+    dbTables: "notification_preferences(SELECT,UPDATE), users(SELECT)",
+    dbProcedures: "sp_update_notification_preferences",
+    dbRelations: "notification_preferences.user_id->users.id",
+  },
 };
 
 export const updateNotificationPreferences = _updateNotificationPreferences;
@@ -1169,6 +3037,12 @@ _approveQuotation.metadata = {
   inputModel: {
     quotationId: "quotation_123",
     comments: "Aprovado conforme discutido",
+  },
+
+  supabaseInfos: {
+    dbTables: "quotations(SELECT,UPDATE), notifications(INSERT)",
+    dbProcedures: "sp_approve_quotation",
+    dbRelations: "quotations.user_id->notifications.user_id",
   },
 };
 
@@ -1187,6 +3061,14 @@ _convertToBooking.metadata = {
     touristPhone: "11999999999",
     hotel: "Hotel Central",
     specialRequests: "Pedidos especiais para a reserva",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "quotations(SELECT,UPDATE), bookings(INSERT), booking_addons(INSERT)",
+    dbProcedures: "sp_convert_quotation_to_booking",
+    dbRelations:
+      "quotations.experience_id->bookings.experience_id, quotations.user_id->bookings.user_id, bookings.id->booking_addons.booking_id",
   },
 };
 
@@ -1210,6 +3092,14 @@ _createQuotation.metadata = {
     inclusions: ["Transporte", "Guia", "Água"],
     exclusions: ["Refeições", "Ingressos"],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "quotations(INSERT), quotation_addons(INSERT), experiences(SELECT), guides(SELECT)",
+    dbProcedures: "sp_create_quotation",
+    dbRelations:
+      "quotations.experience_id->experiences.id, experiences.guide_id->guides.id, quotations.id->quotation_addons.quotation_id",
+  },
 };
 
 export const createQuotation = _createQuotation;
@@ -1218,6 +3108,14 @@ _getQuotationDetails.metadata = {
   description: " Obter detalhes de uma cotação",
   category: " quotations",
   inputModel: { quotationId: "quotation_123" },
+
+  supabaseInfos: {
+    dbTables:
+      "quotations(SELECT), quotation_addons(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)",
+    dbProcedures: "sp_get_quotation_details",
+    dbRelations:
+      "quotations.experience_id->experiences.id, quotations.user_id->users.id, experiences.guide_id->guides.id, quotations.id->quotation_addons.quotation_id",
+  },
 };
 
 export const getQuotationDetails = _getQuotationDetails;
@@ -1232,6 +3130,14 @@ _listQuotations.metadata = {
     page: 1,
     limit: 10,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "quotations(SELECT), experiences(SELECT), users(SELECT), guides(SELECT)",
+    dbProcedures: "sp_list_quotations",
+    dbRelations:
+      "quotations.experience_id->experiences.id, quotations.user_id->users.id, experiences.guide_id->guides.id",
+  },
 };
 
 export const listQuotations = _listQuotations;
@@ -1243,6 +3149,12 @@ _rejectQuotation.metadata = {
     quotationId: "quotation_123",
     reason: "Preço acima do orçamento",
     requestNewQuote: true,
+  },
+
+  supabaseInfos: {
+    dbTables: "quotations(SELECT,UPDATE), notifications(INSERT)",
+    dbProcedures: "sp_reject_quotation",
+    dbRelations: "quotations.user_id->notifications.user_id",
   },
 };
 
@@ -1264,6 +3176,12 @@ _updateQuotation.metadata = {
     inclusions: ["Transporte", "Guia", "Água", "Lanche"],
     exclusions: ["Refeições principais", "Ingressos"],
   },
+
+  supabaseInfos: {
+    dbTables: "quotations(SELECT,UPDATE), quotation_history(INSERT)",
+    dbProcedures: "sp_update_quotation",
+    dbRelations: "quotations.id->quotation_history.quotation_id",
+  },
 };
 
 export const updateQuotation = _updateQuotation;
@@ -1281,6 +3199,14 @@ _exportData.metadata = {
     format: "csv", // 'csv', 'excel', 'json'
     includeFields: ["id", "date", "tourist", "guide", "experience", "price"],
   },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT), reviews(SELECT)",
+    dbProcedures: "sp_export_data",
+    dbRelations:
+      "bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->payments.booking_id, experiences.id->reviews.experience_id",
+  },
 };
 
 export const exportData = _exportData;
@@ -1295,6 +3221,14 @@ _getBookingReport.metadata = {
     guideId: "guide_123", // Opcional
     locationId: "location_123", // Opcional
     format: "json", // 'json', 'csv', 'excel'
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "bookings(SELECT), experiences(SELECT), users(SELECT), guides(SELECT), payments(SELECT)",
+    dbProcedures: "sp_get_booking_report",
+    dbRelations:
+      "bookings.experience_id->experiences.id, bookings.user_id->users.id, experiences.guide_id->guides.id, bookings.id->payments.booking_id",
   },
 };
 
@@ -1312,6 +3246,14 @@ _getExperiencePerformanceReport.metadata = {
     metrics: ["bookings", "revenue", "ratings", "views"],
     format: "json", // 'json', 'csv', 'excel'
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(SELECT), bookings(SELECT), reviews(SELECT), experience_categories(SELECT), categories(SELECT)",
+    dbProcedures: "sp_get_experience_performance_report",
+    dbRelations:
+      "experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, experiences.id->experience_categories.experience_id, experience_categories.category_id->categories.id",
+  },
 };
 
 export const getExperiencePerformanceReport = _getExperiencePerformanceReport;
@@ -1326,6 +3268,14 @@ _getGuidePerformanceReport.metadata = {
     endDate: "2023-12-31",
     metrics: ["bookings", "revenue", "ratings", "response_time"],
     format: "json", // 'json', 'csv', 'excel'
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "guides(SELECT), experiences(SELECT), bookings(SELECT), reviews(SELECT), payments(SELECT)",
+    dbProcedures: "sp_get_guide_performance_report",
+    dbRelations:
+      "guides.id->experiences.guide_id, experiences.id->bookings.experience_id, experiences.id->reviews.experience_id, bookings.id->payments.booking_id",
   },
 };
 
@@ -1343,6 +3293,14 @@ _getRevenueReport.metadata = {
     groupBy: "guide", // 'guide', 'experience', 'category', 'location'
     format: "json", // 'json', 'csv', 'excel'
   },
+
+  supabaseInfos: {
+    dbTables:
+      "payments(SELECT), bookings(SELECT), experiences(SELECT), guides(SELECT)",
+    dbProcedures: "sp_get_revenue_report",
+    dbRelations:
+      "payments.booking_id->bookings.id, bookings.experience_id->experiences.id, experiences.guide_id->guides.id",
+  },
 };
 
 export const getRevenueReport = _getRevenueReport;
@@ -1357,6 +3315,14 @@ _createReview.metadata = {
     rating: 5,
     comment: "Experiência incrível! O guia foi muito atencioso e conhecedor.",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "reviews(INSERT), review_attributes(INSERT), bookings(SELECT), experiences(SELECT), guides(SELECT)",
+    dbProcedures: "sp_create_review",
+    dbRelations:
+      "reviews.experience_id->experiences.id, reviews.booking_id->bookings.id, reviews.guide_id->guides.id, reviews.id->review_attributes.review_id",
+  },
 };
 
 export const createReview = _createReview;
@@ -1365,6 +3331,12 @@ _deleteReview.metadata = {
   description: " Excluir avaliação",
   category: " reviews",
   inputModel: { reviewId: "review_123", reason: "Informações incorretas" },
+
+  supabaseInfos: {
+    dbTables: "reviews(SELECT,UPDATE), review_attributes(UPDATE)",
+    dbProcedures: "sp_delete_review",
+    dbRelations: "reviews.id->review_attributes.review_id",
+  },
 };
 
 export const deleteReview = _deleteReview;
@@ -1375,6 +3347,14 @@ _getReviewStats.metadata = {
   inputModel: {
     type: "guide", // 'guide' ou 'experience'
     id: "guide_123", // ID do guia ou experiência
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "reviews(SELECT), review_attributes(SELECT), experiences(SELECT), guides(SELECT)",
+    dbProcedures: "sp_get_review_stats",
+    dbRelations:
+      "reviews.experience_id->experiences.id, reviews.guide_id->guides.id, reviews.id->review_attributes.review_id",
   },
 };
 
@@ -1391,6 +3371,14 @@ _listReviews.metadata = {
     page: 1,
     limit: 10,
   },
+
+  supabaseInfos: {
+    dbTables:
+      "reviews(SELECT), review_attributes(SELECT), experiences(SELECT), guides(SELECT), users(SELECT)",
+    dbProcedures: "sp_list_reviews",
+    dbRelations:
+      "reviews.experience_id->experiences.id, reviews.guide_id->guides.id, reviews.user_id->users.id, reviews.id->review_attributes.review_id",
+  },
 };
 
 export const listReviews = _listReviews;
@@ -1402,6 +3390,12 @@ _updateReview.metadata = {
     reviewId: "review_123",
     rating: 4,
     comment: "Experiência muito boa, mas poderia melhorar em alguns aspectos.",
+  },
+
+  supabaseInfos: {
+    dbTables: "reviews(SELECT,UPDATE), review_attributes(DELETE,INSERT)",
+    dbProcedures: "sp_update_review",
+    dbRelations: "reviews.id->review_attributes.review_id",
   },
 };
 
@@ -1415,6 +3409,14 @@ _deleteImage.metadata = {
     folder: "experiences",
     id: "exp_123",
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experience_images(SELECT,DELETE), blog_images(SELECT,DELETE), guide_certifications(SELECT,DELETE)",
+    dbProcedures: "sp_delete_image",
+    dbRelations:
+      "experience_images.experience_id->experiences.id, blog_images.post_id->blog_posts.id, guide_certifications.guide_id->guides.id",
+  },
 };
 
 export const deleteImage = _deleteImage;
@@ -1426,6 +3428,12 @@ _generateSlug.metadata = {
     text: "Título do Post ou Experiência",
     type: "experience", // 'experience', 'blog', etc.
   },
+
+  supabaseInfos: {
+    dbTables: "experiences(SELECT), blog_posts(SELECT)",
+    dbProcedures: "sp_generate_slug",
+    dbRelations: "null",
+  },
 };
 
 export const generateSlug = _generateSlug;
@@ -1434,6 +3442,12 @@ _getLocationCoordinates.metadata = {
   description: " Obter coordenadas de um local",
   category: " utils",
   inputModel: { address: "Av. Paulista, 1000, São Paulo, SP, Brasil" },
+
+  supabaseInfos: {
+    dbTables: "locations(SELECT,INSERT)",
+    dbProcedures: "sp_get_location_coordinates",
+    dbRelations: "null",
+  },
 };
 
 export const getLocationCoordinates = _getLocationCoordinates;
@@ -1445,6 +3459,12 @@ _translateText.metadata = {
     text: "Texto para traduzir",
     sourceLanguage: "pt",
     targetLanguage: "en",
+  },
+
+  supabaseInfos: {
+    dbTables: "translation_cache(SELECT,INSERT)",
+    dbProcedures: "sp_translate_text",
+    dbRelations: "null",
   },
 };
 
@@ -1463,6 +3483,14 @@ _uploadImage.metadata = {
       caption: "Legenda da imagem",
     },
   },
+
+  supabaseInfos: {
+    dbTables:
+      "experience_images(INSERT), blog_images(INSERT), profiles(UPDATE)",
+    dbProcedures: "sp_upload_image",
+    dbRelations:
+      "experience_images.experience_id->experiences.id, blog_images.post_id->blog_posts.id, profiles.user_id->users.id",
+  },
 };
 
 export const uploadImage = _uploadImage;
@@ -1474,6 +3502,13 @@ _validateCoupon.metadata = {
     code: "DESCONTO20",
     experienceId: "exp_123",
     userId: "user_123",
+  },
+
+  supabaseInfos: {
+    dbTables: "coupons(SELECT), coupon_usages(SELECT), experiences(SELECT)",
+    dbProcedures: "sp_validate_coupon",
+    dbRelations:
+      "coupons.experience_id->experiences.id, coupons.id->coupon_usages.coupon_id",
   },
 };
 

@@ -106,14 +106,6 @@ export default function GuideProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Botão de voltar */}
-      <div className="container mx-auto p-4">
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => router.back()}>
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-      </div>
-
       <Tabs defaultValue="public" value={activeTab} onValueChange={setActiveTab} className="container mx-auto">
         <div className="flex justify-center mb-6">
           <TabsList>

@@ -10,7 +10,7 @@ export function AuthButton() {
   if (isLoggedIn) {
     return (
       <Link href="/me">
-        <Button size="sm" className="bg-brand-500 hover:bg-brand-600">
+        <Button size="sm" className="btn btn-primary">
           Minha Área
         </Button>
       </Link>
@@ -19,7 +19,7 @@ export function AuthButton() {
 
   return (
     <Link href="/auth/login">
-      <Button size="sm" className="hidden md:inline-flex bg-brand-500 hover:bg-brand-600">
+      <Button size="sm" className="hidden md:inline-flex btn btn-primary">
         Entrar
       </Button>
     </Link>

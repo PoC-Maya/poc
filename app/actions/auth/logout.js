@@ -10,24 +10,19 @@ import { requireAuth } from "@/lib/withAuth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-// Schema para validação
-const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
-});
+// Schema para validação - vazio pois não há dados de entrada
+const schema = z.object({});
 
 export async function logout(prevState, formData) {
   try {
     // Pega o usuário autenticado e o perfil do usuário
     const { user, profile, supabase } = await requireAuth();
 
-    // Extrair dados do FormData
+    // Extrair dados do FormData (vazio neste caso)
     const rawData = Object.fromEntries(formData.entries());
     console.log('Dados recebidos:', rawData);
 
-    // Validação dos dados do formulário  
+    // Validação dos dados do formulário (vazio neste caso)
     const validation = schema.safeParse(rawData);
 
     // Se houver erro de validação, retorna imediatamente com os erros
@@ -38,29 +33,18 @@ export async function logout(prevState, formData) {
       };
     }
 
-    // Dados validados
-    const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
+    // Realizar o logout no Supabase
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) throw error;
 
     // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    revalidatePath('/');
+    revalidatePath('/login');
     
     return { 
       success: true,
-      message: "logout executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Logout realizado com sucesso",
     };
 
   } catch (error) {
@@ -68,7 +52,7 @@ export async function logout(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar logout. Tente novamente.",
+        _form: "Erro ao realizar logout. Tente novamente.",
       },
     };
   }

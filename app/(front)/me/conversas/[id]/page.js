@@ -113,7 +113,7 @@ export default function ConversaDetalhesPage({ params }) {
           >
             <div
               className={`max-w-[70%] rounded-lg p-3 ${
-                mensagem.remetente === "turista" ? "bg-brand-600 text-white" : "bg-gray-100 dark:bg-gray-800"
+                mensagem.remetente === "turista" ? "bg-blue-600 text-white" : "bg-gray-100"
               }`}
             >
               <p className="text-sm">{mensagem.texto}</p>

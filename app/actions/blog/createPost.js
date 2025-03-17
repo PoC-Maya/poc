@@ -1,84 +1,213 @@
-'use server'
+"use server"
 
 /**
- * @description Criar novo post
+ * @description Create a new blog post
  * @category blog
  * @inputModel {
-  title: 'Título do Post',
-  content: 'Conteúdo completo do post em formato markdown ou HTML',
-  excerpt: 'Breve resumo do post',
-  coverImage: [File], // Arquivo de upload
-  authorId: 'author_123',
-  category: 'Dicas de Viagem',
-  tags: ['viagem', 'dicas', 'turismo'],
+  title: 'Post Title',
+  content: 'Full post content in markdown or HTML format',
+  excerpt: 'Brief summary of the post',
+  coverImage: [File],
+  galleryImages: [[File]],
+  videoUrl: 'https://www.youtube.com/watch?v=example123',
+  category: 'Travel Tips',
+  tags: ['travel', 'tips', 'tourism'],
   published: false
 }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { requireAuth } from "@/lib/withAuth"
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import { extractYoutubeVideoId } from "../utils/extractYoutubeVideoId"
 
-// Schema para validação
+// Schema for validation
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
-});
+  title: z.string().min(3, "Title must have at least 3 characters").max(100, "Title must have at most 100 characters"),
+  content: z.string().min(10, "Content must have at least 10 characters"),
+  excerpt: z.string().max(200, "Excerpt must have at most 200 characters").optional(),
+  videoUrl: z.string().url("Invalid video URL").optional(),
+  category: z.string().min(1, "Category is required"),
+  tags: z.preprocess(
+    (val) => {
+      console.log("Tags raw value:", val) // Para debug
+
+      // Se for uma string JSON, tente parseá-la
+      if (typeof val === "string") {
+        try {
+          const parsed = JSON.parse(val)
+          if (Array.isArray(parsed)) return parsed
+        } catch (e) {
+          // Se não for um JSON válido, tente outras abordagens
+          console.error("Error parsing tags JSON:", e)
+        }
+      }
+
+      // Se já for um array, use-o diretamente
+      if (Array.isArray(val)) return val
+
+      // Caso contrário, retorne um array vazio
+      return []
+    },
+    z.array(z.string()).min(1, "Add at least one tag"),
+  ),
+  published: z.preprocess(
+    // Convert string to boolean
+    (val) => val === "true" || val === true,
+    z.boolean().default(false),
+  ),
+})
 
 export async function createPost(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
+    // Get authenticated user and profile
+    const { user, profile, supabase } = await requireAuth()
 
-    // Extrair dados do FormData
-    const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    // Extract data from FormData
+    const rawData = Object.fromEntries(formData.entries())
+    console.log("Received data:", rawData)
 
-    // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
+    // Melhorar o processamento de imagens
+    // Handle coverImage and galleryImages
+    let coverImageUrl = null
+    let galleryImageUrls = []
 
-    // Se houver erro de validação, retorna imediatamente com os erros
+    // Check if coverImage is a URL (from Cloudinary) or a file
+    const coverImage = formData.get("coverImage")
+    if (coverImage && typeof coverImage === "string") {
+      if (coverImage.startsWith("http")) {
+        coverImageUrl = coverImage
+        console.log("URL de imagem de capa detectada:", coverImageUrl)
+      }
+    }
+
+    // Check if galleryImages are URLs (from Cloudinary) or files
+    const galleryImages = formData.get("galleryImages")
+    if (galleryImages && typeof galleryImages === "string") {
+      try {
+        // Try to parse as JSON array of URLs
+        if (galleryImages.startsWith("[") && galleryImages.endsWith("]")) {
+          const parsed = JSON.parse(galleryImages)
+          if (Array.isArray(parsed)) {
+            galleryImageUrls = parsed.filter((url) => typeof url === "string" && url.startsWith("http"))
+            console.log("URLs de galeria detectadas:", galleryImageUrls)
+          }
+        } else if (galleryImages.startsWith("http")) {
+          // Single URL
+          galleryImageUrls = [galleryImages]
+          console.log("URL única de galeria detectada:", galleryImageUrls)
+        }
+      } catch (e) {
+        console.error("Erro ao processar galleryImages:", e)
+        console.log("Valor bruto de galleryImages:", galleryImages)
+      }
+    }
+
+    // Log para debug
+    console.log("Dados processados para imagens:")
+    console.log("coverImageUrl:", coverImageUrl)
+    console.log("galleryImageUrls:", galleryImageUrls)
+
+    // Validate form data
+    const validation = schema.safeParse(rawData)
+
+    // If validation fails, return immediately with errors
     if (!validation.success) {
       return {
         success: false,
         errors: validation.error.flatten().fieldErrors,
-      };
+      }
     }
 
-    // Dados validados
-    const data = validation.data;
+    // Validated data
+    const data = validation.data
 
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
+    // Extract YouTube video ID if URL is provided
+    let videoId = null
+    if (data.videoUrl) {
+      videoId = extractYoutubeVideoId(data.videoUrl)
+      if (!videoId) {
+        return {
+          success: false,
+          errors: {
+            videoUrl: "Invalid YouTube URL",
+          },
+        }
+      }
+    }
 
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
-    
-    return { 
+    // Insert post into database
+    // Note: Slug will be generated automatically by the database trigger
+    const { data: post, error: postError } = await supabase
+      .from("blog_posts")
+      .insert({
+        title: data.title,
+        // slug field is omitted - will be generated by the trigger
+        content: data.content,
+        excerpt: data.excerpt || "",
+        cover_image: coverImageUrl,
+        gallery_images: galleryImageUrls,
+        video_url: data.videoUrl,
+        video_id: videoId,
+        category: data.category,
+        published: data.published,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (postError) throw postError
+
+    // Process tags
+    const tagPromises = data.tags.map(async (tagName) => {
+      // Check if tag already exists
+      const { data: existingTag } = await supabase.from("blog_tags").select("id").eq("name", tagName).single()
+
+      if (existingTag) {
+        return existingTag.id
+      }
+
+      // Create new tag
+      const { data: newTag, error: tagError } = await supabase
+        .from("blog_tags")
+        .insert({ name: tagName })
+        .select()
+        .single()
+
+      if (tagError) throw tagError
+
+      return newTag.id
+    })
+
+    const tagIds = await Promise.all(tagPromises)
+
+    // Associate tags with post
+    const postTags = tagIds.map((tagId) => ({
+      post_id: post.id,
+      tag_id: tagId,
+    }))
+
+    const { error: postTagsError } = await supabase.from("blog_post_tags").insert(postTags)
+
+    if (postTagsError) throw postTagsError
+
+    // Revalidate relevant paths
+    revalidatePath("/blog")
+
+    return {
       success: true,
-      message: "createPost executado com sucesso",
-      // Dados adicionais que você queira retornar
-    };
-
+      message: "Post created successfully",
+      data: post,
+    }
   } catch (error) {
-    console.error("createPost error:", error);
+    console.error("createPost error:", error)
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar createPost. Tente novamente.",
+        _form: error.message || "Error creating post. Please try again.",
       },
-    };
+    }
   }
 }
+

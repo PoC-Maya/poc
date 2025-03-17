@@ -57,7 +57,7 @@ export default function ConversasPage() {
 
       <div className="space-y-4">
         {conversas.map((conversa) => (
-          <Link href={`/me/conversas/${conversa.id}`} key={conversa.id}>
+          <Link href={`/me/conversas/${conversa.id}`} key={conversa.id} className="block">
             <Card
               className={`cursor-pointer transition-colors hover:bg-gray-50 ${!conversa.lida ? "border-l-4 border-l-brand-600" : ""}`}
             >
