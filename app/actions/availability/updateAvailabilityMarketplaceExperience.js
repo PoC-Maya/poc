@@ -1,15 +1,12 @@
 'use server'
 
 /**
- * @description Criar perfil de guia (após registro)
- * @category guides
+ * @description Atualizar template de disponibilidade
+ * @category availability
  * @inputModel {
-  bio: 'Biografia do guia',
-  location: 'São Paulo, Brasil',
-  experienceYears: 5,
-  languages: ['Português', 'Inglês', 'Espanhol'],
-  specialties: ['História', 'Gastronomia'],
-  certifications: ['Guia de Turismo MTur']
+  templateId: 'template_123',
+  name: 'Horário de Verão',
+  isActive: true
 }
  */
 
@@ -25,7 +22,7 @@ const schema = z.object({
   // email: z.string().email("Email inválido"),
 });
 
-export async function createGuideProfile(prevState, formData) {
+export async function updateAvailabilityMarketplaceExperience(prevState, formData) {
   try {
     // Pega o usuário autenticado e o perfil do usuário
     const { user, profile, supabase } = await requireAuth();
@@ -66,16 +63,16 @@ export async function createGuideProfile(prevState, formData) {
     
     return { 
       success: true,
-      message: "createGuideProfile executado com sucesso",
+      message: "updateAvailabilityMarketplaceExperience executado com sucesso",
       // Dados adicionais que você queira retornar
     };
 
   } catch (error) {
-    console.error("createGuideProfile error:", error);
+    console.error("updateAvailabilityMarketplaceExperience error:", error);
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar createGuideProfile. Tente novamente.",
+        _form: "Erro ao executar updateAvailabilityMarketplaceExperience. Tente novamente.",
       },
     };
   }

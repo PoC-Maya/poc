@@ -2,31 +2,31 @@
 
 /**
  * @description Atualizar perfil do usuário
- * @category auth
+ * @category user
  * @inputModel {
-  fullName: 'Nome Atualizado',
-  phone: '11999999999',
-  bio: 'Breve descrição sobre mim'
-}
+ *   "fullName": "Nome Atualizado",
+ *   "phone": "11999999999",
+ *   "bio": "Breve descrição sobre mim",
+ *   "nationality": "Brazilian",
+ *   "language": "en-US"
+ * }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/withAuth";
 
 // Schema para validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100),
+  phone: z.string().min(8, "Telefone deve ter pelo menos 8 caracteres").max(20).optional(),
+  bio: z.string().max(500, "Biografia deve ter no máximo 500 caracteres").optional(),
+  nationality: z.string().min(2, "Nacionalidade deve ter pelo menos 2 caracteres").max(50).optional(),
+  language: z.string().min(2, "Idioma deve ter pelo menos 2 caracteres").max(10).default("en-US"),
 });
 
 export async function updateProfile(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
     console.log('Dados recebidos:', rawData);
@@ -44,27 +44,39 @@ export async function updateProfile(prevState, formData) {
 
     // Dados validados
     const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    
+    // Pega o usuário autenticado e o cliente Supabase e usa o que precisar
+    const { user, profile, supabase } = await requireAuth();
+    
+    // Atualizar perfil no banco de dados
+    const { error: updateProfileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: data.fullName,
+        phone: data.phone || null,
+        bio: data.bio || null,
+        nationality: data.nationality || null,
+        language: data.language,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.id);
+    
+    if (updateProfileError) {
+      console.error("Erro ao atualizar perfil:", updateProfileError);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao atualizar perfil: " + updateProfileError.message,
+        },
+      };
+    }
+    
+    // Revalidar o caminho para atualizar os dados na UI
+    revalidatePath('/me/perfil');
     
     return { 
       success: true,
-      message: "updateProfile executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Perfil atualizado com sucesso!",
     };
 
   } catch (error) {
@@ -72,7 +84,7 @@ export async function updateProfile(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar updateProfile. Tente novamente.",
+        _form: "Erro ao atualizar perfil. Tente novamente.",
       },
     };
   }

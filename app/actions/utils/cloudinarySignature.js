@@ -1,61 +1,44 @@
-// app/actions/cloudinary.js
-'use server'
+'use server';
 
-/**
- * @description Gerar assinatura para upload direto no Cloudinary
- * @category Utilitários
- * @inputModel {
-  "folder": "blog"
-}
- */
+import crypto from 'crypto';
 
-import { requireAuth } from "@/lib/withAuth";
-import { generateUploadSignature } from "@/lib/cloudinary";
-import { z } from "zod";
-
-// Schema para validação
-const schema = z.object({
-  folder: z.string().optional().default('uploads')
-});
-
-export async function cloudinarySignature(prevState, formData) {
-  try {
-    // Autenticar usuário
-    const { user } = await requireAuth();
-    
-    // Extrair dados do FormData
-    const rawData = Object.fromEntries(formData.entries());
-    
-    // Validação dos dados do formulário
-    const validation = schema.safeParse(rawData);
-    
-    // Se houver erro de validação, retorna imediatamente com os erros
-    if (!validation.success) {
-      return {
-        success: false,
-        errors: validation.error.flatten().fieldErrors,
-      };
-    }
-    
-    // Dados validados
-    const data = validation.data;
-    
-    // Gerar assinatura
-    const signatureData = generateUploadSignature({
-      folder: data.folder
-    });
-    
-    return {
-      success: true,
-      ...signatureData
-    };
-  } catch (error) {
-    console.error("getCloudinarySignature error:", error);
-    return {
-      success: false,
-      errors: {
-        _form: "Erro ao gerar assinatura. Tente novamente."
-      }
-    };
+export async function getCloudinarySignature(prevState, formData) {
+  const folder = formData.get("folder") || "uploads";
+  const timestamp = Math.floor(Date.now() / 1000);
+  
+  // Determine if folder should be included in signature based on folder name
+  const shouldIncludeFolder = folder.includes("experiences") || 
+                             folder.includes("training_files") || 
+                             folder.includes("support_files");
+  
+  // Determine which parameters to include in the signature
+  let stringToSign;
+  
+  if (shouldIncludeFolder) {
+    // For experiences, training_files and support_files
+    stringToSign = `folder=${folder}&timestamp=${timestamp}`;
+  } else {
+    // For cover_image, gallery_image, blog, etc.
+    stringToSign = `timestamp=${timestamp}`;
   }
+  
+  // Generate signature using your API secret
+  const signature = crypto
+    .createHash("sha1")
+    .update(stringToSign + process.env.CLOUDINARY_API_SECRET)
+    .digest("hex");
+  
+  return {
+    success: true,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    signature,
+    timestamp,
+    folder,
+    shouldIncludeFolder, // Include this flag in the response
+    stringToSign, // Include this for debugging
+  };
 }
+
+// Export with both names for compatibility
+export { getCloudinarySignature as cloudinarySignature };

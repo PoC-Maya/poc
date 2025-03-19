@@ -1,38 +1,42 @@
 'use server'
 
 /**
- * @description Salvar consentimentos LGPD
- * @category auth
+ * @description Salvar preferências de consentimento do usuário
+ * @category user
  * @inputModel {
-  marketing: true,
-  analytics: true,
-  thirdParty: false
-}
+ *   "marketing": true,
+ *   "analytics": true,
+ *   "thirdParty": false
+ * }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/withAuth";
 
 // Schema para validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  marketing: z.boolean().default(false),
+  analytics: z.boolean().default(false),
+  thirdParty: z.boolean().default(false),
 });
 
 export async function saveConsent(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    
+    // Converter strings "true"/"false" para booleanos
+    const parsedData = {
+      marketing: rawData.marketing === "true",
+      analytics: rawData.analytics === "true",
+      thirdParty: rawData.thirdParty === "true",
+    };
+    
+    console.log('Dados recebidos:', parsedData);
 
     // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
+    const validation = schema.safeParse(parsedData);
 
     // Se houver erro de validação, retorna imediatamente com os erros
     if (!validation.success) {
@@ -44,27 +48,37 @@ export async function saveConsent(prevState, formData) {
 
     // Dados validados
     const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    
+    // Pega o usuário autenticado e o cliente Supabase e usa o que precisar
+    const { user, profile, supabase } = await requireAuth();
+    
+    // Atualizar as preferências de consentimento no perfil do usuário
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        consent_marketing: data.marketing,
+        consent_analytics: data.analytics,
+        consent_third_party: data.thirdParty,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.id);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar preferências de consentimento:", updateError);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao salvar preferências de consentimento: " + updateError.message,
+        },
+      };
+    }
+    
+    // Revalidar o caminho para atualizar os dados na UI
+    revalidatePath('/me/perfil');
     
     return { 
       success: true,
-      message: "saveConsent executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Preferências de consentimento salvas com sucesso!",
     };
 
   } catch (error) {
@@ -72,7 +86,7 @@ export async function saveConsent(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar saveConsent. Tente novamente.",
+        _form: "Erro ao salvar preferências de consentimento. Tente novamente.",
       },
     };
   }

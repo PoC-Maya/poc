@@ -1,43 +1,82 @@
 'use server'
 
 /**
- * @description Atualizar preferências (idioma, notificações)
- * @category auth
+ * @description Atualizar preferências do usuário
+ * @category user
  * @inputModel {
-  language: 'pt-BR',
-  notifications: {
-    email: true,
-    push: false
-  }
-}
+ *   "language": "en-US",
+ *   "notifications": {
+ *     "email": true,
+ *     "push": false,
+ *     "marketing": true
+ *   }
+ * }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/withAuth";
 
 // Schema para validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  language: z.string().min(2).max(10).default("en-US"),
+  notifications: z.object({
+    email: z.boolean().default(true),
+    push: z.boolean().default(false),
+    marketing: z.boolean().default(false),
+  }).default({}),
 });
 
 export async function updatePreferences(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    console.log('Raw FormData:', rawData);
+    
+    // Verificar se notifications está sendo enviado como JSON string
+    let parsedData = {};
+    
+    // Adicionar language
+    parsedData.language = rawData.language || 'en-US';
+    
+    // Processar notifications
+    if (rawData.notifications) {
+      try {
+        // Tentar fazer parse se for uma string JSON
+        parsedData.notifications = JSON.parse(rawData.notifications);
+      } catch (e) {
+        console.error('Erro ao fazer parse de notifications:', e);
+        // Fallback para valores padrão
+        parsedData.notifications = {
+          email: true,
+          push: false,
+          marketing: false
+        };
+      }
+    } else if (rawData["notifications.email"] !== undefined) {
+      // Formato alternativo: campos individuais
+      parsedData.notifications = {
+        email: rawData["notifications.email"] === "true",
+        push: rawData["notifications.push"] === "true",
+        marketing: rawData["notifications.marketing"] === "true",
+      };
+    } else {
+      // Valores padrão
+      parsedData.notifications = {
+        email: true,
+        push: false,
+        marketing: false
+      };
+    }
+    
+    console.log('Dados processados:', parsedData);
 
     // Validação dos dados do formulário  
-    const validation = schema.safeParse(rawData);
+    const validation = schema.safeParse(parsedData);
 
     // Se houver erro de validação, retorna imediatamente com os erros
     if (!validation.success) {
+      console.error('Erro de validação:', validation.error);
       return {
         success: false,
         errors: validation.error.flatten().fieldErrors,
@@ -46,27 +85,43 @@ export async function updatePreferences(prevState, formData) {
 
     // Dados validados
     const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    console.log('Dados validados:', data);
+    
+    // Pega o usuário autenticado e o cliente Supabase e usa o que precisar
+    const { user, profile, supabase } = await requireAuth();
+    
+    // Atualizar as preferências no perfil do usuário
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        language: data.language,
+        notification_email: data.notifications.email,
+        notification_push: data.notifications.push,
+        notification_marketing: data.notifications.marketing,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.id);
+    
+    if (updateError) {
+      console.error("Erro ao atualizar preferências:", updateError);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao salvar preferências: " + updateError.message,
+        },
+      };
+    }
+    
+    // Revalidar o caminho para atualizar os dados na UI
+    revalidatePath('/me/perfil');
     
     return { 
       success: true,
-      message: "updatePreferences executado com sucesso",
-      // Dados adicionais que você queira retornar
+      message: "Preferências atualizadas com sucesso!",
+      data: {
+        language: data.language,
+        notifications: data.notifications
+      }
     };
 
   } catch (error) {
@@ -74,7 +129,7 @@ export async function updatePreferences(prevState, formData) {
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar updatePreferences. Tente novamente.",
+        _form: "Erro ao atualizar preferências. Tente novamente.",
       },
     };
   }

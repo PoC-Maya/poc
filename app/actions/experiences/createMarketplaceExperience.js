@@ -1,68 +1,61 @@
 'use server'
 
 /**
- * @description Criar uma nova experiência
- * @category Experiences
- * @inputModel {
- *   // Informações Básicas
- *   "title": "Título da Experiência",
- *   "description": "Descrição detalhada da experiência",
- *   "marketplace": false,
- *   "marketplace_message": "Mensagem para guias que se inscreverem (apenas para marketplace)",
- *   "max_guides": 10, // Apenas para marketplace
- *   "duration_minutes": 180,
- *   "min_participants": 1,
- *   "max_participants": 10,
- *   "max_adults": 6,
- *   "max_teens": 2,
- *   "max_children": 2,
- *   
- *   // Itinerário
- *   "itinerary": [
- *     {"order": 1, "title": "Ponto de encontro", "description": "Encontro no local X", "duration_minutes": 15},
- *     {"order": 2, "title": "Visita ao local Y", "description": "Exploração do local Y", "duration_minutes": 60}
- *   ],
- *   
- *   // Preços
- *   "price_tiers": [
- *     {"min_people": 1, "max_people": 2, "adult_price": 100, "teen_price": 90, "child_price": 80},
- *     {"min_people": 3, "max_people": 4, "adult_price": 80, "teen_price": 70, "child_price": 60},
- *     {"min_people": 5, "max_people": 10, "adult_price": 60, "teen_price": 50, "child_price": 0}
- *   ],
- *   
- *   // Horários de Trabalho
- *   "working_hours": [
- *     {"day_of_week": 1, "start_time": "09:00", "end_time": "17:00"},
- *     {"day_of_week": 2, "start_time": "09:00", "end_time": "17:00"}
- *   ],
- *   
- *   // Mídia
- *   "cover_image": "[File ou URL]",
- *   "gallery_images": ["[File ou URL]"],
- *   
- *   // Arquivos (apenas para marketplace)
- *   "training_files": [
- *     {"title": "Manual de Treinamento", "description": "Guia completo para guias", "file": "[File ou URL]"}
- *   ],
- *   "support_files": [
- *     {"title": "Mapa do Percurso", "description": "Mapa detalhado com pontos de interesse", "file": "[File ou URL]"}
- *   ],
- *   
- *   // Questionário (apenas para marketplace)
- *   "quiz_questions": [
- *     {
- *       "question": "Qual é o ponto de encontro?",
- *       "options": ["Local A", "Local B", "Local C", "Local D"],
- *       "correct_option": 0,
- *       "order_index": 1,
- *       "is_active": true
- *     }
- *   ],
- *   
- *   // Status
- *   "status": "draft" // ou "published"
- * }
- */
+* @description Criar uma nova experiência do marketplace (apenas para administradores)
+* @category Experiences
+* @inputModel {
+*   // Informações Básicas
+*   "title": "Título da Experiência",
+*   "description": "Descrição detalhada da experiência",
+*   "marketplace_message": "Mensagem para guias que se inscreverem",
+*   "max_guides": 10,
+*   "duration_minutes": 180,
+*   "min_participants": 1,
+*   "max_participants": 10,
+*   "max_adults": 6,
+*   "max_teens": 2,
+*   "max_children": 2,
+*   
+*   // Itinerário
+*   "itinerary": [
+*     {"order": 1, "title": "Ponto de encontro", "description": "Encontro no local X", "duration_minutes": 15},
+*     {"order": 2, "title": "Visita ao local Y", "description": "Exploração do local Y", "duration_minutes": 60}
+*   ],
+*   
+*   // Preços
+*   "price_tiers": [
+*     {"min_people": 1, "max_people": 2, "adult_price": 100, "teen_price": 90, "child_price": 80},
+*     {"min_people": 3, "max_people": 4, "adult_price": 80, "teen_price": 70, "child_price": 60},
+*     {"min_people": 5, "max_people": 10, "adult_price": 60, "teen_price": 50, "child_price": 0}
+*   ],
+*   
+*   // Mídia (URLs do Cloudinary)
+*   "cover_image": "https://res.cloudinary.com/example/image/upload/v1234567890/cover.jpg",
+*   "gallery_images": ["https://res.cloudinary.com/example/image/upload/v1234567890/gallery1.jpg"],
+*   
+*   // Arquivos (URLs do Cloudinary)
+*   "training_files": [
+*     {"title": "Manual de Treinamento", "description": "Guia completo para guias", "file": "https://res.cloudinary.com/example/image/upload/v1234567890/manual.pdf"}
+*   ],
+*   "support_files": [
+*     {"title": "Mapa do Percurso", "description": "Mapa detalhado com pontos de interesse", "file": "https://res.cloudinary.com/example/image/upload/v1234567890/map.pdf"}
+*   ],
+*   
+*   // Questionário
+*   "quiz_questions": [
+*     {
+*       "question": "Qual é o ponto de encontro?",
+*       "options": ["Local A", "Local B", "Local C", "Local D"],
+*       "correct_option": 0,
+*       "order_index": 1,
+*       "is_active": true
+*     }
+*   ],
+*   
+*   // Status
+*   "status": "draft" // ou "published"
+* }
+*/
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -86,16 +79,6 @@ const priceTierSchema = z.object({
 }).refine(data => data.min_people <= data.max_people, {
   message: "O número mínimo de pessoas deve ser menor ou igual ao máximo",
   path: ["min_people"]
-});
-
-// Esquema de validação para horários de trabalho
-const workingHourSchema = z.object({
-  day_of_week: z.number().int().min(0).max(6),
-  start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-  end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-}).refine(data => data.start_time < data.end_time, {
-  message: "O horário de início deve ser anterior ao horário de término",
-  path: ["start_time"]
 });
 
 // Esquema de validação para arquivos
@@ -122,9 +105,8 @@ const schema = z.object({
   // Informações Básicas
   title: z.string().min(3).max(255),
   description: z.string().min(10),
-  marketplace: z.boolean().default(false),
-  marketplace_message: z.string().optional(),
-  max_guides: z.number().int().min(1).max(20).optional(),
+  marketplace_message: z.string().min(10),
+  max_guides: z.number().int().min(1).max(20),
   duration_minutes: z.number().int().min(30),
   min_participants: z.number().int().min(1),
   max_participants: z.number().int().min(1),
@@ -138,19 +120,16 @@ const schema = z.object({
   // Preços
   price_tiers: z.array(priceTierSchema).min(1),
   
-  // Horários de Trabalho
-  working_hours: z.array(workingHourSchema).min(1),
-  
   // Mídia
-  cover_image: z.string().optional(),
-  gallery_images: z.array(z.string()).optional(),
+  cover_image: z.string().url(),
+  gallery_images: z.array(z.string().url()).min(1),
   
-  // Arquivos (apenas para marketplace)
-  training_files: z.array(fileSchema).optional(),
-  support_files: z.array(fileSchema).optional(),
+  // Arquivos
+  training_files: z.array(fileSchema).min(1),
+  support_files: z.array(fileSchema).min(1),
   
-  // Questionário (apenas para marketplace)
-  quiz_questions: z.array(quizQuestionSchema).optional(),
+  // Questionário
+  quiz_questions: z.array(quizQuestionSchema).min(1),
   
   // Status
   status: z.enum(['draft', 'published']).default('draft')
@@ -163,14 +142,6 @@ const schema = z.object({
 }, {
   message: "A soma dos máximos de adultos, adolescentes e crianças deve estar entre o mínimo e o máximo de participantes",
   path: ["max_adults"]
-}).refine(data => {
-  if (data.marketplace) {
-    return !!data.max_guides && !!data.quiz_questions && data.quiz_questions.length >= 1;
-  }
-  return true;
-}, {
-  message: "Experiências do marketplace precisam ter max_guides e quiz_questions definidos",
-  path: ["marketplace"]
 }).refine(data => {
   // Verificar se as faixas de preço cobrem todo o intervalo de participantes
   const sortedTiers = [...data.price_tiers].sort((a, b) => a.min_people - b.min_people);
@@ -198,7 +169,7 @@ const schema = z.object({
   path: ["price_tiers"]
 });
 
-export async function createExperience(prevState, formData) {
+export async function createMarketplaceExperience(prevState, formData) {
   try {
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
@@ -209,7 +180,7 @@ export async function createExperience(prevState, formData) {
     
     // Processar campos que podem ser arrays ou objetos JSON
     const jsonFields = [
-      'itinerary', 'price_tiers', 'working_hours', 'gallery_images',
+      'itinerary', 'price_tiers', 'gallery_images',
       'training_files', 'support_files', 'quiz_questions'
     ];
     
@@ -225,11 +196,6 @@ export async function createExperience(prevState, formData) {
       }
     });
 
-    // Processar campos booleanos
-    if (rawData.marketplace) {
-      processedData.marketplace = rawData.marketplace === 'true' || rawData.marketplace === true;
-    }
-
     // Processar campos numéricos
     const numericFields = [
       'max_guides', 'duration_minutes', 'min_participants', 'max_participants',
@@ -241,67 +207,6 @@ export async function createExperience(prevState, formData) {
         processedData[field] = Number(rawData[field]);
       }
     });
-
-    // Processar cover_image e gallery_images
-    let coverImageUrl = null;
-    let galleryImageUrls = [];
-
-    // Verificar se cover_image é uma URL ou um arquivo
-    const coverImage = formData.get("cover_image");
-    if (coverImage && typeof coverImage === "string") {
-      if (coverImage.startsWith("http")) {
-        coverImageUrl = coverImage;
-        processedData.cover_image = coverImageUrl;
-      }
-    }
-
-    // Verificar se gallery_images são URLs ou arquivos
-    const galleryImages = formData.get("gallery_images");
-    if (galleryImages && typeof galleryImages === "string") {
-      try {
-        // Tentar analisar como JSON array de URLs
-        if (galleryImages.startsWith("[") && galleryImages.endsWith("]")) {
-          const parsed = JSON.parse(galleryImages);
-          if (Array.isArray(parsed)) {
-            galleryImageUrls = parsed.filter((url) => typeof url === "string" && url.startsWith("http"));
-            processedData.gallery_images = galleryImageUrls;
-          }
-        } else if (galleryImages.startsWith("http")) {
-          // URL única
-          galleryImageUrls = [galleryImages];
-          processedData.gallery_images = galleryImageUrls;
-        }
-      } catch (e) {
-        console.error("Erro ao processar gallery_images:", e);
-      }
-    }
-
-    // Processar training_files e support_files
-    if (processedData.training_files && Array.isArray(processedData.training_files)) {
-      processedData.training_files = processedData.training_files.map(file => {
-        if (typeof file === 'string') {
-          try {
-            return JSON.parse(file);
-          } catch (e) {
-            return file;
-          }
-        }
-        return file;
-      });
-    }
-
-    if (processedData.support_files && Array.isArray(processedData.support_files)) {
-      processedData.support_files = processedData.support_files.map(file => {
-        if (typeof file === 'string') {
-          try {
-            return JSON.parse(file);
-          } catch (e) {
-            return file;
-          }
-        }
-        return file;
-      });
-    }
 
     // Log para debug
     console.log('Dados processados:', processedData);
@@ -323,8 +228,8 @@ export async function createExperience(prevState, formData) {
     // Pega o usuário autenticado e o cliente Supabase
     const { user, profile, supabase } = await requireAuth();
     
-    // Verificar se o usuário pode criar experiências do marketplace
-    if (data.marketplace && profile.user_type !== 'admin') {
+    // Verificar se o usuário é admin
+    if (profile.user_type !== 'admin') {
       return {
         success: false,
         errors: {
@@ -352,9 +257,9 @@ export async function createExperience(prevState, formData) {
         created_by: user.id,
         title: data.title,
         description: data.description,
-        marketplace: data.marketplace,
+        marketplace: true, // Sempre true para experiências do marketplace
         marketplace_message: data.marketplace_message,
-        max_guides: data.marketplace ? data.max_guides : null,
+        max_guides: data.max_guides,
         itinerary: data.itinerary,
         duration_minutes: data.duration_minutes,
         min_participants: data.min_participants,
@@ -364,8 +269,8 @@ export async function createExperience(prevState, formData) {
         max_children: data.max_children,
         cover_image: data.cover_image,
         gallery_images: data.gallery_images,
-        training_files: data.marketplace ? data.training_files : null,
-        support_files: data.marketplace ? data.support_files : null,
+        training_files: data.training_files,
+        support_files: data.support_files,
         status: data.status
       };
       
@@ -397,41 +302,22 @@ export async function createExperience(prevState, formData) {
         throw new Error("Erro ao inserir faixas de preço: " + priceTiersError.message);
       }
       
-      // PASSO 3: Inserir as perguntas do quiz (apenas para marketplace)
-      if (data.marketplace && data.quiz_questions && data.quiz_questions.length > 0) {
-        const quizQuestionsToInsert = data.quiz_questions.map(question => ({
-          experience_id: experience.id,
-          question: question.question,
-          options: question.options,
-          correct_option: question.correct_option,
-          order_index: question.order_index,
-          is_active: question.is_active
-        }));
-        
-        const { error: quizQuestionsError } = await supabase
-          .from('experience_quiz_questions')
-          .insert(quizQuestionsToInsert);
-        
-        if (quizQuestionsError) {
-          throw new Error("Erro ao inserir perguntas do quiz: " + quizQuestionsError.message);
-        }
-      }
-      
-      // PASSO 4: Inserir os horários de trabalho
-      const workingHoursToInsert = data.working_hours.map(wh => ({
-        guide_id: user.id,
+      // PASSO 3: Inserir as perguntas do quiz
+      const quizQuestionsToInsert = data.quiz_questions.map(question => ({
         experience_id: experience.id,
-        day_of_week: wh.day_of_week,
-        start_time: wh.start_time,
-        end_time: wh.end_time
+        question: question.question,
+        options: question.options,
+        correct_option: question.correct_option,
+        order_index: question.order_index,
+        is_active: question.is_active
       }));
       
-      const { error: workingHoursError } = await supabase
-        .from('guide_experience_working_hours')
-        .insert(workingHoursToInsert);
+      const { error: quizQuestionsError } = await supabase
+        .from('experience_quiz_questions')
+        .insert(quizQuestionsToInsert);
       
-      if (workingHoursError) {
-        throw new Error("Erro ao inserir horários de trabalho: " + workingHoursError.message);
+      if (quizQuestionsError) {
+        throw new Error("Erro ao inserir perguntas do quiz: " + quizQuestionsError.message);
       }
       
       // Confirmar a transação
@@ -442,11 +328,12 @@ export async function createExperience(prevState, formData) {
       }
       
       // Revalidar o caminho para atualizar os dados na UI
-      revalidatePath('/experiences');
+      revalidatePath('/admin/experiences');
+      revalidatePath('/experiences/marketplace');
       
       return { 
         success: true,
-        message: "Experiência criada com sucesso!",
+        message: "Experiência do marketplace criada com sucesso!",
         data: {
           id: experience.id
         }
@@ -455,20 +342,20 @@ export async function createExperience(prevState, formData) {
       // Reverter a transação em caso de erro
       await supabase.rpc('rollback_transaction');
       
-      console.error("createExperience error:", error);
+      console.error("createMarketplaceExperience error:", error);
       return {
         success: false,
         errors: {
-          _form: error.message || "Erro ao criar experiência. Tente novamente.",
+          _form: error.message || "Erro ao criar experiência do marketplace. Tente novamente.",
         },
       };
     }
   } catch (error) {
-    console.error("createExperience error:", error);
+    console.error("createMarketplaceExperience error:", error);
     return {
       success: false,
       errors: {
-        _form: "Erro ao criar experiência. Tente novamente.",
+        _form: "Erro ao criar experiência do marketplace. Tente novamente.",
       },
     };
   }

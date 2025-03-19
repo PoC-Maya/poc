@@ -5,10 +5,46 @@
 // No início do arquivo index.js
 const isDev = process.env.NODE_ENV === "development";
 
-// utils
-import { cloudinarySignature as _cloudinarySignature } from "./utils/cloudinarySignature.js";
+// EMAIL
+/**
+ * @description Enviar email de teste usando Resend
+ * @category email
+ * @inputModel {
+ *   "to": "usuario@exemplo.com",
+ *   "subject": "Assunto do email",
+ *   "firstName": "Nome"
+ * }
+ */
+import { sendTestEmail as _sendTestEmail } from "./email/tester.js";
 
-_cloudinarySignature.metadata = {
+_sendTestEmail.metadata = {
+  description: "Enviar email de teste",
+  category: "Email",
+  inputModel: {
+    to: "poccancun@gmail.com",
+    subject: "Welcome to Xplora Cancun",
+    firstName: "Poc Cancun",
+  },
+  supabaseInfos: {
+    dbTables: "",
+    dbProcedures: "",
+    dbRelations: "",
+  },
+};
+
+export const sendTestEmail = _sendTestEmail;
+
+// CLOUDINARY
+/**
+ * @description Assinar upload no Cloudinary
+ * @category Cloudinary
+ * @inputModel {
+ *   folder: "blog" // folder onde o upload será feito
+ * }
+ */
+import { getCloudinarySignature as _getCloudinarySignature } from "./utils/cloudinarySignature.js";
+
+_getCloudinarySignature.metadata = {
   description: "Assinar upload no Cloudinary",
   category: " utilitario",
   inputModel: {
@@ -21,7 +57,9 @@ _cloudinarySignature.metadata = {
   },
 };
 
-export const cloudinarySignature = _cloudinarySignature;
+export const getCloudinarySignature = _getCloudinarySignature;
+
+// ADMIN
 /**
  * @description Obtém logs de auditoria do sistema
  * @category Admin
@@ -145,9 +183,9 @@ import { changePassword as _changePassword } from "./auth/changePassword.js";
  *   password: string,
  *   reason: string
  * }
- * @dbTables users(SELECT,UPDATE), profiles(UPDATE), bookings(UPDATE), experiences(UPDATE), audit_logs(INSERT)
- * @dbProcedures sp_delete_account
- * @dbRelations users.id->profiles.user_id, users.id->bookings.user_id, users.id->experiences.guide_id, audit_logs.user_id->users.id
+ * @dbTables ""
+ * @dbProcedures delete_account
+ * @dbRelations ""
  */
 import { deleteAccount as _deleteAccount } from "./auth/deleteAccount.js";
 
@@ -244,6 +282,20 @@ import { updatePreferences as _updatePreferences } from "./auth/updatePreference
 import { updateProfile as _updateProfile } from "./auth/updateProfile.js";
 
 /**
+/**
+ * @description Atualizar avatar do perfil do usuário
+ * @category Auth
+ * @inputModel {
+ *   "avatar": [File] ou "avatar": "https://res.cloudinary.com/..."
+ * }
+ *
+ * @dbTables profiles(SELECT,UPDATE), users(SELECT), audit_logs(INSERT)
+ * @dbProcedures sp_update_user_profile
+ * @dbRelations profiles.user_id->users.id, audit_logs.user_id->users.id
+ */
+import { updateProfileAvatar as _updateProfileAvatar } from "./auth/updateProfileAvatar.js";
+
+/**
  * @description Adiciona exceção à disponibilidade
  * @category Availability
  * @inputModel {
@@ -286,7 +338,7 @@ import { addTimeBlock as _addTimeBlock } from "./availability/addTimeBlock.js";
  * @dbProcedures sp_create_availability_template
  * @dbRelations availability_templates.guide_id->guides.id, guides.user_id->users.id
  */
-import { createAvailabilityTemplate as _createAvailabilityTemplate } from "./availability/createAvailabilityTemplate.js";
+import { createAvailabilityMarketplaceExperience as _createAvailabilityMarketplaceExperience } from "./availability/createAvailabilityMarketplaceExperience.js";
 
 /**
  * @description Obtém datas disponíveis
@@ -355,7 +407,7 @@ import { removeTimeBlock as _removeTimeBlock } from "./availability/removeTimeBl
  * @dbProcedures sp_update_availability_template
  * @dbRelations availability_templates.guide_id->guides.id, guides.user_id->users.id
  */
-import { updateAvailabilityTemplate as _updateAvailabilityTemplate } from "./availability/updateAvailabilityTemplate.js";
+import { updateAvailabilityMarketplaceExperience as _updateAvailabilityMarketplaceExperience } from "./availability/updateAvailabilityMarketplaceExperience.js";
 
 /**
  * @description Cria post no blog
@@ -558,7 +610,7 @@ import { processPayment as _processPayment } from "./bookings/processPayment.js"
  * @category Bookings
  * @inputModel {
  *   bookingId: string,
- *   emailTemplate: string
+ *   emailMarketplaceExperience: string
  * }
  * @dbTables bookings(SELECT), users(SELECT), experiences(SELECT), guides(SELECT), email_logs(INSERT)
  * @dbProcedures sp_send_booking_confirmation
@@ -680,21 +732,120 @@ import { addItineraryItem as _addItineraryItem } from "./experiences/addItinerar
 import { cloneExperience as _cloneExperience } from "./experiences/cloneExperience.js";
 
 /**
- * @description Cria uma experiência personalizada
+ * @description Criar uma nova experiência do marketplace (apenas para administradores)
  * @category Experiences
  * @inputModel {
- *   title: string,
- *   description: string,
- *   duration: number,
- *   basePrice: number,
- *   locationId: string,
- *   customRequirements: string
+ *   // Informações Básicas
+ *   "title": "Título da Experiência",
+ *   "description": "Descrição detalhada da experiência",
+ *   "marketplace_message": "Mensagem para guias que se inscreverem",
+ *   "max_guides": 10,
+ *   "duration_minutes": 180,
+ *   "min_participants": 1,
+ *   "max_participants": 10,
+ *   "max_adults": 6,
+ *   "max_teens": 2,
+ *   "max_children": 2,
+ *
+ *   // Itinerário
+ *   "itinerary": [
+ *     {"order": 1, "title": "Ponto de encontro", "description": "Encontro no local X", "duration_minutes": 15},
+ *     {"order": 2, "title": "Visita ao local Y", "description": "Exploração do local Y", "duration_minutes": 60}
+ *   ],
+ *
+ *   // Preços
+ *   "price_tiers": [
+ *     {"min_people": 1, "max_people": 2, "adult_price": 100, "teen_price": 90, "child_price": 80},
+ *     {"min_people": 3, "max_people": 4, "adult_price": 80, "teen_price": 70, "child_price": 60},
+ *     {"min_people": 5, "max_people": 10, "adult_price": 60, "teen_price": 50, "child_price": 0}
+ *   ],
+ *
+ *   // Mídia
+ *   "cover_image": "[File ou URL]",
+ *   "gallery_images": ["[File ou URL]"],
+ *
+ *   // Arquivos
+ *   "training_files": [
+ *     {"title": "Manual de Treinamento", "description": "Guia completo para guias", "file": "[File ou URL]"}
+ *   ],
+ *   "support_files": [
+ *     {"title": "Mapa do Percurso", "description": "Mapa detalhado com pontos de interesse", "file": "[File ou URL]"}
+ *   ],
+ *
+ *   // Questionário
+ *   "quiz_questions": [
+ *     {
+ *       "question": "Qual é o ponto de encontro?",
+ *       "options": ["Local A", "Local B", "Local C", "Local D"],
+ *       "correct_option": 0,
+ *       "order_index": 1,
+ *       "is_active": true
+ *     }
+ *   ],
+ *
+ *   // Status
+ *   "status": "draft" // ou "published"
  * }
- * @dbTables experiences(INSERT), experience_pricing(INSERT), guides(SELECT), locations(SELECT)
- * @dbProcedures sp_create_custom_experience
- * @dbRelations experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id
  */
-import { createCustomExperience as _createCustomExperience } from "./experiences/createCustomExperience.js";
+import { createMarketplaceExperience as _createMarketplaceExperience } from "./experiences/createMarketplaceExperience.js";
+
+/**
+ * @description Criar uma nova experiência do marketplace (apenas para administradores)
+ * @category Experiences
+ * @inputModel {
+ *   // Informações Básicas
+ *   "title": "Título da Experiência",
+ *   "description": "Descrição detalhada da experiência",
+ *   "marketplace_message": "Mensagem para guias que se inscreverem",
+ *   "max_guides": 10,
+ *   "duration_minutes": 180,
+ *   "min_participants": 1,
+ *   "max_participants": 10,
+ *   "max_adults": 6,
+ *   "max_teens": 2,
+ *   "max_children": 2,
+ *
+ *   // Itinerário
+ *   "itinerary": [
+ *     {"order": 1, "title": "Ponto de encontro", "description": "Encontro no local X", "duration_minutes": 15},
+ *     {"order": 2, "title": "Visita ao local Y", "description": "Exploração do local Y", "duration_minutes": 60}
+ *   ],
+ *
+ *   // Preços
+ *   "price_tiers": [
+ *     {"min_people": 1, "max_people": 2, "adult_price": 100, "teen_price": 90, "child_price": 80},
+ *     {"min_people": 3, "max_people": 4, "adult_price": 80, "teen_price": 70, "child_price": 60},
+ *     {"min_people": 5, "max_people": 10, "adult_price": 60, "teen_price": 50, "child_price": 0}
+ *   ],
+ *
+ *   // Mídia
+ *   "cover_image": "[File ou URL]",
+ *   "gallery_images": ["[File ou URL]"],
+ *
+ *   // Arquivos
+ *   "training_files": [
+ *     {"title": "Manual de Treinamento", "description": "Guia completo para guias", "file": "[File ou URL]"}
+ *   ],
+ *   "support_files": [
+ *     {"title": "Mapa do Percurso", "description": "Mapa detalhado com pontos de interesse", "file": "[File ou URL]"}
+ *   ],
+ *
+ *   // Questionário
+ *   "quiz_questions": [
+ *     {
+ *       "question": "Qual é o ponto de encontro?",
+ *       "options": ["Local A", "Local B", "Local C", "Local D"],
+ *       "correct_option": 0,
+ *       "order_index": 1,
+ *       "is_active": true
+ *     }
+ *   ],
+ *
+ *   // Status
+ *   "status": "draft" // ou "published"
+ * }
+ */
+import { updateMarketplaceExperience as _updateMarketplaceExperience } from "./experiences/updateMarketplaceExperience.js";
 
 /**
  * @description Cria uma nova experiência
@@ -887,22 +1038,6 @@ import { uploadExperienceImages as _uploadExperienceImages } from "./experiences
 import { completeOnboarding as _completeOnboarding } from "./guides/completeOnboarding.js";
 
 /**
- * @description Cria perfil de guia
- * @category Guides
- * @inputModel {
- *   bio: string,
- *   languages: array,
- *   specialties: array,
- *   yearsOfExperience: number,
- *   certifications: array
- * }
- * @dbTables guides(INSERT), guide_languages(INSERT), guide_specialties(INSERT), guide_certifications(INSERT), users(SELECT)
- * @dbProcedures sp_create_guide_profile
- * @dbRelations guides.user_id->users.id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id
- */
-import { createGuideProfile as _createGuideProfile } from "./guides/createGuideProfile.js";
-
-/**
  * @description Obtém detalhes de um guia
  * @category Guides
  * @inputModel {
@@ -963,10 +1098,43 @@ import { updateCommissionRate as _updateCommissionRate } from "./guides/updateCo
  * @description Atualiza perfil de guia
  * @category Guides
  * @inputModel {
- *   bio: string,
- *   languages: array,
- *   specialties: array,
- *   yearsOfExperience: number
+ *   // Informações Pessoais
+ *   "avatar": "[File]",
+ *   "fullName": "Nome Completo",
+ *   "city": "Cancun",
+ *   "state": "Quintana Roo",
+ *   "shortDescription": "Descrição curta do guia",
+ *   "fullDescription": "Descrição completa e detalhada do guia",
+ *
+ *   // Informações Profissionais
+ *   "languages": [{"language": "Português", "proficiency": "native"}],
+ *   "specialties": ["Mergulho", "Fotografia", "História"],
+ *   "certifications": [{"name": "PADI Open Water", "startYear": 2018, "endYear": 2023}],
+ *   "education": [{"institution": "UNAM", "course": "Turismo", "startYear": 2010, "endYear": 2014}],
+ *   "workExperience": [{"role": "Guia de Mergulho", "company": "Dive Cancun", "startDate": "2015-01", "endDate": "2020-12"}],
+ *   "academicExperience": {"title": "Professor de História", "place": "Universidade de Cancun", "date": "2016-2018"},
+ *
+ *   // Mídia
+ *   "photos": ["[File]"],
+ *   "youtubeVideos": ["https://youtube.com/watch?v=abc123"],
+ *
+ *   // Configurações da Conta
+ *   "phone": "+5219981234567",
+ *   "stripeAccount": "acct_123456",
+ *   "commissionRate": 85,
+ *
+ *   // Preferências de Notificação
+ *   "emailNotifications": {"newBookings": true, "newMessages": true, "paymentsReceived": true, "marketingPromotions": true},
+ *   "smsNotifications": {"newBookings": true, "newMessages": true, "paymentsReceived": true},
+ *
+ *   // Configurações de Privacidade
+ *   "profileVisibility": "public",
+ *   "dataSharing": true,
+ *
+ *   // Preferências da Plataforma
+ *   "language": "en-US",
+ *   "currency": "USD",
+ *   "dateFormat": "DD/MM/YYYY"
  * }
  * @dbTables guides(SELECT,UPDATE), guide_languages(DELETE,INSERT), guide_specialties(DELETE,INSERT)
  * @dbProcedures sp_update_guide_profile
@@ -1010,7 +1178,7 @@ import { verifyGuide as _verifyGuide } from "./guides/verifyGuide.js";
  * @dbProcedures sp_enroll_in_template
  * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
  */
-import { enrollInTemplate as _enrollInTemplate } from "./marketplace/enrollInTemplate.js";
+import { enrollInMarketplaceExperience as _enrollInMarketplaceExperience } from "./marketplace/enrollInMarketplaceExperience.js";
 
 /**
  * @description Obtém detalhes de um template
@@ -1022,7 +1190,7 @@ import { enrollInTemplate as _enrollInTemplate } from "./marketplace/enrollInTem
  * @dbProcedures sp_get_template_details
  * @dbRelations experience_templates.location_id->locations.id, experience_templates.id->template_itinerary_items.template_id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_addons.template_id, experience_templates.id->template_images.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id, experience_templates.id->template_languages.template_id, experience_templates.id->template_included_items.template_id, experience_templates.id->template_excluded_items.template_id
  */
-import { getTemplateDetails as _getTemplateDetails } from "./marketplace/getTemplateDetails.js";
+import { getMarketplaceExperienceDetails as _getMarketplaceExperienceDetails } from "./marketplace/getMarketplaceExperienceDetails.js";
 
 /**
  * @description Lista templates em que o guia está inscrito
@@ -1035,7 +1203,7 @@ import { getTemplateDetails as _getTemplateDetails } from "./marketplace/getTemp
  * @dbProcedures sp_list_enrolled_templates
  * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
  */
-import { listEnrolledTemplates as _listEnrolledTemplates } from "./marketplace/listEnrolledTemplates.js";
+import { listEnrolledMarketplaceExperiences as _listEnrolledMarketplaceExperiences } from "./marketplace/listEnrolledMarketplaceExperiences.js";
 
 /**
  * @description Lista experiências de template
@@ -1051,7 +1219,7 @@ import { listEnrolledTemplates as _listEnrolledTemplates } from "./marketplace/l
  * @dbProcedures sp_list_template_experiences
  * @dbRelations experience_templates.location_id->locations.id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id
  */
-import { listTemplateExperiences as _listTemplateExperiences } from "./marketplace/listTemplateExperiences.js";
+import { listMarketplaceExperiences as _listMarketplaceExperiences } from "./marketplace/listMarketplaceExperiences.js";
 
 /**
  * @description Cancela inscrição em um template
@@ -1064,7 +1232,7 @@ import { listTemplateExperiences as _listTemplateExperiences } from "./marketpla
  * @dbProcedures sp_unenroll_from_template
  * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
  */
-import { unenrollFromTemplate as _unenrollFromTemplate } from "./marketplace/unenrollFromTemplate.js";
+import { unenrollFromMarketplaceExperience as _unenrollFromMarketplaceExperience } from "./marketplace/unenrollFromMarketplaceExperience.js";
 
 /**
  * @description Obtém notificações não lidas
@@ -1592,7 +1760,7 @@ _updateUserStatus.metadata = {
 export const updateUserStatus = _updateUserStatus;
 
 _changePassword.metadata = {
-  description: " Alterar senha",
+  description: " Alterar senha || Ok",
   category: " auth",
   inputModel: {
     currentPassword: "senhaAtual",
@@ -1610,7 +1778,7 @@ _changePassword.metadata = {
 export const changePassword = _changePassword;
 
 _deleteAccount.metadata = {
-  description: " Excluir conta (com anonimização)",
+  description: " Excluir conta (com anonimização) || OK",
   category: " auth",
   inputModel: { password: "senha123", reason: "Motivo da exclusão" },
 
@@ -1626,7 +1794,7 @@ _deleteAccount.metadata = {
 export const deleteAccount = _deleteAccount;
 
 _login.metadata = {
-  description: " Autenticar usuário",
+  description: " Autenticar usuário || Ok",
   category: " auth",
   inputModel: { email: "usuario@exemplo.com", password: "senha123" },
 
@@ -1640,7 +1808,7 @@ _login.metadata = {
 export const login = _login;
 
 _logout.metadata = {
-  description: " Encerrar sessão do usuário",
+  description: " Encerrar sessão do usuário || Ok",
   category: " auth",
   inputModel: {},
 
@@ -1654,7 +1822,7 @@ _logout.metadata = {
 export const logout = _logout;
 
 _register.metadata = {
-  description: " Registrar novo usuário (turista ou guia)",
+  description: " Registrar novo usuário (turista ou guia) || Ok",
   category: " auth",
   inputModel: {
     email: "usuario@exemplo.com",
@@ -1691,7 +1859,7 @@ _resetPassword.metadata = {
 export const resetPassword = _resetPassword;
 
 _saveConsent.metadata = {
-  description: " Salvar consentimentos LGPD",
+  description: " Salvar consentimentos LGPD || Ok",
   category: " auth",
   inputModel: { marketing: true, analytics: true, thirdParty: false },
 
@@ -1706,13 +1874,14 @@ _saveConsent.metadata = {
 export const saveConsent = _saveConsent;
 
 _updatePreferences.metadata = {
-  description: " Atualizar preferências (idioma, notificações)",
+  description: " Atualizar preferências (idioma, notificações) || Ok",
   category: " auth",
   inputModel: {
-    language: "pt-BR",
+    language: "en-US",
     notifications: {
       email: true,
       push: false,
+      marketing: true,
     },
   },
 
@@ -1727,12 +1896,14 @@ _updatePreferences.metadata = {
 export const updatePreferences = _updatePreferences;
 
 _updateProfile.metadata = {
-  description: " Atualizar perfil do usuário",
+  description: " Atualizar perfil do usuário || Ok",
   category: " auth",
   inputModel: {
     fullName: "Nome Atualizado",
     phone: "11999999999",
     bio: "Breve descrição sobre mim",
+    nationality: "Brazilian",
+    language: "en-US",
   },
 
   supabaseInfos: {
@@ -1743,6 +1914,22 @@ _updateProfile.metadata = {
 };
 
 export const updateProfile = _updateProfile;
+
+_updateProfileAvatar.metadata = {
+  description: " Atualizar avatar do perfil do usuário || Ok",
+  category: " auth",
+  inputModel: {
+    avatar: "[File]", // Upload file for Cloudinary
+  },
+
+  supabaseInfos: {
+    dbTables: "profiles(SELECT,UPDATE), users(SELECT)",
+    dbProcedures: "",
+    dbRelations: "profiles.user_id->users.id",
+  },
+};
+
+export const updateProfileAvatar = _updateProfileAvatar;
 
 _addException.metadata = {
   description: " Adicionar exceção de disponibilidade",
@@ -1786,7 +1973,7 @@ _addTimeBlock.metadata = {
 
 export const addTimeBlock = _addTimeBlock;
 
-_createAvailabilityTemplate.metadata = {
+_createAvailabilityMarketplaceExperience.metadata = {
   description: " Criar template de disponibilidade",
   category: " availability",
   inputModel: {
@@ -1804,7 +1991,7 @@ _createAvailabilityTemplate.metadata = {
   },
 };
 
-export const createAvailabilityTemplate = _createAvailabilityTemplate;
+export const createAvailabilityMarketplaceExperience = _createAvailabilityMarketplaceExperience;
 
 _getAvailableDates.metadata = {
   description: " Obter datas disponíveis",
@@ -1878,7 +2065,7 @@ _removeTimeBlock.metadata = {
 
 export const removeTimeBlock = _removeTimeBlock;
 
-_updateAvailabilityTemplate.metadata = {
+_updateAvailabilityMarketplaceExperience.metadata = {
   description: " Atualizar template de disponibilidade",
   category: " availability",
   inputModel: {
@@ -1895,10 +2082,10 @@ _updateAvailabilityTemplate.metadata = {
   },
 };
 
-export const updateAvailabilityTemplate = _updateAvailabilityTemplate;
+export const updateAvailabilityMarketplaceExperience = _updateAvailabilityMarketplaceExperience;
 
 _createPost.metadata = {
-  description: " Criar novo post",
+  description: " Criar novo post || Ok",
   category: " blog",
   inputModel: {
     title: "Post Title",
@@ -1923,7 +2110,7 @@ _createPost.metadata = {
 export const createPost = _createPost;
 
 _deletePost.metadata = {
-  description: " Excluir post",
+  description: " Excluir post || Ok",
   category: " blog",
   inputModel: {
     postId: "7c54946f-a6f1-454c-9eec-878c2852944f",
@@ -1941,7 +2128,7 @@ _deletePost.metadata = {
 export const deletePost = _deletePost;
 
 _getPostDetails.metadata = {
-  description: " Obter detalhes de um post",
+  description: " Obter detalhes de um post || Ok",
   category: " blog",
   inputModel: { slug: "titulo-do-post" },
 
@@ -1957,7 +2144,7 @@ _getPostDetails.metadata = {
 export const getPostDetails = _getPostDetails;
 
 _listPosts.metadata = {
-  description: " Listar posts",
+  description: " Listar posts || Ok",
   category: " blog",
   inputModel: {
     category: "Dicas de Viagem",
@@ -1981,7 +2168,7 @@ _listPosts.metadata = {
 export const listPosts = _listPosts;
 
 _updatePost.metadata = {
-  description: " Atualizar post",
+  description: " Atualizar post || Ok",
   category: " blog",
   inputModel: {
     id: "post_123",
@@ -2365,64 +2552,264 @@ _cloneExperience.metadata = {
 
 export const cloneExperience = _cloneExperience;
 
-_createCustomExperience.metadata = {
-  description: " Criar experiência personalizada",
+_createMarketplaceExperience.metadata = {
+  description: " Criar nova experiência",
   category: " experiences",
   inputModel: {
-    title: "Experiência Personalizada",
-    touristId: "tourist_123",
-    baseExperienceId: "exp_123", // Opcional, se baseada em uma existente
-    date: "2023-07-20",
-    participants: {
-      adults: 2,
-      teenagers: 1,
-      children: 0,
-    },
-    specialRequests: "Gostaria de incluir uma parada para almoço",
-    duration: 6, // horas
-    locationId: "location_123",
+    title: "Título da Experiência",
+    description: "Descrição detalhada da experiência",
+    marketplace_message: "Mensagem para guias que se inscreverem",
+    max_guides: 10,
+    duration_minutes: 180,
+    min_participants: 1,
+    max_participants: 10,
+    max_adults: 6,
+    max_teens: 2,
+    max_children: 2,
+    itinerary: [
+      {
+        order: 1,
+        title: "Ponto de encontro",
+        description: "Encontro no local X",
+        duration_minutes: 15,
+      },
+      {
+        order: 2,
+        title: "Visita ao local Y",
+        description: "Exploração do local Y",
+        duration_minutes: 60,
+      },
+    ],
+    price_tiers: [
+      {
+        min_people: 1,
+        max_people: 2,
+        adult_price: 100,
+        teen_price: 90,
+        child_price: 80,
+      },
+      {
+        min_people: 3,
+        max_people: 4,
+        adult_price: 80,
+        teen_price: 70,
+        child_price: 60,
+      },
+      {
+        min_people: 5,
+        max_people: 10,
+        adult_price: 60,
+        teen_price: 50,
+        child_price: 0,
+      },
+    ],
+    cover_image: "[File]",
+    gallery_images: ["[File]"],
+    training_files: [
+      {
+        title: "Manual de Treinamento",
+        description: "Guia completo para guias",
+        file: "[File]",
+      },
+    ],
+    support_files: [
+      {
+        title: "Mapa do Percurso",
+        description: "Mapa detalhado com pontos de interesse",
+        file: "[File]",
+      },
+    ],
+    quiz_questions: [
+      {
+        question: "Qual é o ponto de encontro?",
+        options: ["Local A", "Local B", "Local C", "Local D"],
+        correct_option: 0,
+        order_index: 1,
+        is_active: true,
+      },
+    ],
+    status: "draft",
   },
 
   supabaseInfos: {
     dbTables:
-      "experiences(INSERT), experience_pricing(INSERT), guides(SELECT), locations(SELECT)",
-    dbProcedures: "sp_create_custom_experience",
+      "experiences(INSERT), experience_pricing(INSERT), experience_categories(INSERT), experience_languages(INSERT), experience_included_items(INSERT), experience_excluded_items(INSERT), guides(SELECT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_create_experience",
     dbRelations:
-      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id",
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experience_categories.category_id->categories.id",
   },
 };
 
-export const createCustomExperience = _createCustomExperience;
+export const createMarketplaceExperience = _createMarketplaceExperience;
+
+_updateMarketplaceExperience.metadata = {
+  description: " Update nova experiência do marketplace",
+  category: " experiences",
+  inputModel: {
+    experienceId: "b3763ebf-9016-4403-8938-020c71da3398",
+    title: "Edit Título da Experiência",
+    description: "Edit Descrição detalhada da experiência",
+    marketplace_message: "Edit Mensagem para guias que se inscreverem",
+    max_guides: 10,
+    duration_minutes: 180,
+    min_participants: 1,
+    max_participants: 10,
+    max_adults: 6,
+    max_teens: 2,
+    max_children: 2,
+    itinerary: [
+      {
+        order: 1,
+        title: "edit Ponto de encontro",
+        description: "edit Encontro no local X",
+        duration_minutes: 15,
+      },
+      {
+        order: 2,
+        title: "edit Visita ao local Y",
+        description: "edit Exploração do local Y",
+        duration_minutes: 60,
+      },
+    ],
+    price_tiers: [
+      {
+        min_people: 1,
+        max_people: 2,
+        adult_price: 100,
+        teen_price: 90,
+        child_price: 80,
+      },
+      {
+        min_people: 3,
+        max_people: 4,
+        adult_price: 80,
+        teen_price: 70,
+        child_price: 60,
+      },
+      {
+        min_people: 5,
+        max_people: 10,
+        adult_price: 60,
+        teen_price: 50,
+        child_price: 0,
+      },
+    ],
+    cover_image: "[File]",
+    gallery_images: ["[File]"],
+    training_files: [
+      {
+        title: "edit Manual de Treinamento",
+        description: "edit Guia completo para guias",
+        file: "[File]",
+      },
+    ],
+    support_files: [
+      {
+        title: "edit Mapa do Percurso",
+        description: "edit Mapa detalhado com pontos de interesse",
+        file: "[File]",
+      },
+    ],
+    quiz_questions: [
+      {
+        question: "edit Qual é o ponto de encontro?",
+        options: ["Local A", "Local B", "Local C", "Local D"],
+        correct_option: 0,
+        order_index: 1,
+        is_active: true,
+      },
+    ],
+    status: "draft",
+  },
+
+  supabaseInfos: {
+    dbTables:
+      "experiences(INSERT), experience_pricing(INSERT), experience_categories(INSERT), experience_languages(INSERT), experience_included_items(INSERT), experience_excluded_items(INSERT), guides(SELECT), locations(SELECT), categories(SELECT)",
+    dbProcedures: "sp_create_experience",
+    dbRelations:
+      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experience_categories.category_id->categories.id",
+  },
+};
+
+export const updateMarketplaceExperience = _updateMarketplaceExperience;
 
 _createExperience.metadata = {
   description: " Criar nova experiência",
   category: " experiences",
   inputModel: {
     title: "Título da Experiência",
-    shortDescription: "Breve descrição",
-    fullDescription: "Descrição completa...",
-    duration: 3, // horas
-    minCapacity: 1,
-    maxCapacity: 10,
-    categoryId: "category_123",
-    locationId: "location_123",
-    meetingPoint: "Ponto de encontro",
-    meetingPointCoordinates: {
-      latitude: -23.55052,
-      longitude: -46.633308,
-    },
-    availableLanguages: ["Português", "Inglês"],
-    servicesIncluded: ["Transporte", "Lanche"],
-    servicesNotIncluded: ["Bebidas alcoólicas"],
-    transportMode: "A pé",
-    pricing: [
+    description: "Descrição detalhada da experiência",
+    marketplace_message: "Mensagem para guias que se inscreverem",
+    max_guides: 10,
+    duration_minutes: 180,
+    min_participants: 1,
+    max_participants: 10,
+    max_adults: 6,
+    max_teens: 2,
+    max_children: 2,
+    itinerary: [
       {
-        minParticipants: 1,
-        maxParticipants: 3,
-        adultPrice: 150,
-        childPrice: 75,
+        order: 1,
+        title: "Ponto de encontro",
+        description: "Encontro no local X",
+        duration_minutes: 15,
+      },
+      {
+        order: 2,
+        title: "Visita ao local Y",
+        description: "Exploração do local Y",
+        duration_minutes: 60,
       },
     ],
+    price_tiers: [
+      {
+        min_people: 1,
+        max_people: 2,
+        adult_price: 100,
+        teen_price: 90,
+        child_price: 80,
+      },
+      {
+        min_people: 3,
+        max_people: 4,
+        adult_price: 80,
+        teen_price: 70,
+        child_price: 60,
+      },
+      {
+        min_people: 5,
+        max_people: 10,
+        adult_price: 60,
+        teen_price: 50,
+        child_price: 0,
+      },
+    ],
+    cover_image: "[File]",
+    gallery_images: [["[File]"]],
+    training_files: [
+      {
+        title: "Manual de Treinamento",
+        description: "Guia completo para guias",
+        file: "[File]",
+      },
+    ],
+    support_files: [
+      {
+        title: "Mapa do Percurso",
+        description: "Mapa detalhado com pontos de interesse",
+        file: "[File]",
+      },
+    ],
+    quiz_questions: [
+      {
+        question: "Qual é o ponto de encontro?",
+        options: ["Local A", "Local B", "Local C", "Local D"],
+        correct_option: 0,
+        order_index: 1,
+        is_active: true,
+      },
+    ],
+    status: "draft",
   },
 
   supabaseInfos: {
@@ -2692,31 +3079,8 @@ _completeOnboarding.metadata = {
 
 export const completeOnboarding = _completeOnboarding;
 
-_createGuideProfile.metadata = {
-  description: " Criar perfil de guia (após registro)",
-  category: " guides",
-  inputModel: {
-    bio: "Biografia do guia",
-    location: "São Paulo, Brasil",
-    experienceYears: 5,
-    languages: ["Português", "Inglês", "Espanhol"],
-    specialties: ["História", "Gastronomia"],
-    certifications: ["Guia de Turismo MTur"],
-  },
-
-  supabaseInfos: {
-    dbTables:
-      "guides(INSERT), guide_languages(INSERT), guide_specialties(INSERT), guide_certifications(INSERT), users(SELECT)",
-    dbProcedures: "sp_create_guide_profile",
-    dbRelations:
-      "guides.user_id->users.id, guides.id->guide_languages.guide_id, guides.id->guide_specialties.guide_id, guides.id->guide_certifications.guide_id",
-  },
-};
-
-export const createGuideProfile = _createGuideProfile;
-
 _getGuideDetails.metadata = {
-  description: " Obter detalhes de um guia",
+  description: " Obter detalhes de um guia || OK",
   category: " guides",
   inputModel: { guideId: "guide_123" },
 
@@ -2751,7 +3115,7 @@ _getGuideStats.metadata = {
 export const getGuideStats = _getGuideStats;
 
 _listGuides.metadata = {
-  description: " Listar guias (com filtros)",
+  description: " Listar guias (com filtros) || OK",
   category: " guides",
   inputModel: {
     location: "São Paulo",
@@ -2787,15 +3151,75 @@ _updateCommissionRate.metadata = {
 export const updateCommissionRate = _updateCommissionRate;
 
 _updateGuideProfile.metadata = {
-  description: " Atualizar perfil de guia",
+  description: "Atualizar perfil de guia || OK",
   category: " guides",
   inputModel: {
-    bio: "Biografia atualizada",
-    location: "Rio de Janeiro, Brasil",
-    experienceYears: 6,
-    languages: ["Português", "Inglês", "Francês"],
-    specialties: ["História", "Aventura"],
-    certifications: ["Guia de Turismo MTur", "Primeiros Socorros"],
+    // Informações Pessoais
+    avatar: "[File]",
+    fullName: "Nome Completo",
+    city: "Cancun",
+    state: "Quintana Roo",
+    shortDescription: "Descrição curta do guia",
+    fullDescription: "Descrição completa e detalhada do guia",
+
+    // Informações Profissionais
+    languages: [{ language: "Português", proficiency: "native" }],
+    specialties: ["Mergulho", "Fotografia", "História"],
+    certifications: [
+      { name: "PADI Open Water", startYear: 2018, endYear: 2023 },
+    ],
+    education: [
+      {
+        institution: "UNAM",
+        course: "Turismo",
+        startYear: 2010,
+        endYear: 2014,
+      },
+    ],
+    workExperience: [
+      {
+        role: "Guia de Mergulho",
+        company: "Dive Cancun",
+        startDate: "2015-01",
+        endDate: "2020-12",
+      },
+    ],
+    academicExperience: {
+      title: "Professor de História",
+      place: "Universidade de Cancun",
+      date: "2016-2018",
+    },
+
+    // Mídia
+    photos: ["[File]"],
+    youtubeVideos: ["https://youtube.com/watch?v=abc123"],
+
+    // Configurações da Conta
+    phone: "+5219981234567",
+    stripeAccount: "acct_123456",
+    commissionRate: 85,
+
+    // Preferências de Notificação
+    emailNotifications: {
+      newBookings: true,
+      newMessages: true,
+      paymentsReceived: true,
+      marketingPromotions: true,
+    },
+    smsNotifications: {
+      newBookings: true,
+      newMessages: true,
+      paymentsReceived: true,
+    },
+
+    // Configurações de Privacidade
+    profileVisibility: "public",
+    dataSharing: true,
+
+    // Preferências da Plataforma
+    language: "en-US",
+    currency: "USD",
+    dateFormat: "DD/MM/YYYY",
   },
 
   supabaseInfos: {
@@ -2848,16 +3272,34 @@ _verifyGuide.metadata = {
 
 export const verifyGuide = _verifyGuide;
 
-_enrollInTemplate.metadata = {
+_enrollInMarketplaceExperience.metadata = {
   description: " Inscrever-se em um template",
   category: " marketplace",
   inputModel: {
-    guideId: "guide_123",
-    templateId: "template_123",
-    customizations: {
-      meetingPoint: "Ponto de encontro personalizado",
-      price: 150, // Preço personalizado
-    },
+    experience_id: "b3763ebf-9016-4403-8938-020c71da3398",
+    max_adults: 5,
+    max_teens: 3,
+    max_children: 2,
+    terms_itinerary_accepted: true,
+    terms_schedule_accepted: true,
+    terms_conditions_accepted: true,
+    working_hours: [
+      {
+        day_of_week: 0,
+        start_time: "09:00:00",
+        end_time: "17:00:00",
+      },
+      {
+        day_of_week: 1,
+        start_time: "09:00:00",
+        end_time: "17:00:00",
+      },
+      {
+        day_of_week: 5,
+        start_time: "10:00:00",
+        end_time: "18:00:00",
+      },
+    ],
   },
 
   supabaseInfos: {
@@ -2869,9 +3311,9 @@ _enrollInTemplate.metadata = {
   },
 };
 
-export const enrollInTemplate = _enrollInTemplate;
+export const enrollInMarketplaceExperience = _enrollInMarketplaceExperience;
 
-_getTemplateDetails.metadata = {
+_getMarketplaceExperienceDetails.metadata = {
   description: " Obter detalhes de um template",
   category: " marketplace",
   inputModel: { templateId: "template_123" },
@@ -2885,9 +3327,9 @@ _getTemplateDetails.metadata = {
   },
 };
 
-export const getTemplateDetails = _getTemplateDetails;
+export const getMarketplaceExperienceDetails = _getMarketplaceExperienceDetails;
 
-_listEnrolledTemplates.metadata = {
+_listEnrolledMarketplaceExperiences.metadata = {
   description: " Listar templates inscritos",
   category: " marketplace",
   inputModel: { guideId: "guide_123", page: 1, limit: 10 },
@@ -2901,9 +3343,9 @@ _listEnrolledTemplates.metadata = {
   },
 };
 
-export const listEnrolledTemplates = _listEnrolledTemplates;
+export const listEnrolledMarketplaceExperiences = _listEnrolledMarketplaceExperiences;
 
-_listTemplateExperiences.metadata = {
+_listMarketplaceExperiences.metadata = {
   description: " Listar experiências do marketplace",
   category: " marketplace",
   inputModel: {
@@ -2924,9 +3366,9 @@ _listTemplateExperiences.metadata = {
   },
 };
 
-export const listTemplateExperiences = _listTemplateExperiences;
+export const listMarketplaceExperiences = _listMarketplaceExperiences;
 
-_unenrollFromTemplate.metadata = {
+_unenrollFromMarketplaceExperience.metadata = {
   description: " Cancelar inscrição em um template",
   category: " marketplace",
   inputModel: {
@@ -2944,7 +3386,7 @@ _unenrollFromTemplate.metadata = {
   },
 };
 
-export const unenrollFromTemplate = _unenrollFromTemplate;
+export const unenrollFromMarketplaceExperience = _unenrollFromMarketplaceExperience;
 
 _getUnreadNotifications.metadata = {
   description: " Obter notificações não lidas",
