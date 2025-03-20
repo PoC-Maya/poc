@@ -23,7 +23,7 @@ const schema = z.object({
   // email: z.string().email("Email inválido"),
 });
 
-export async function createAvailabilityTemplate(prevState, formData) {
+export async function createAvailabilityMarketplaceExperience(prevState, formData) {
   try {
     // Pega o usuário autenticado e o perfil do usuário
     const { user, profile, supabase } = await requireAuth();

@@ -1193,19 +1193,6 @@ import { enrollInMarketplaceExperience as _enrollInMarketplaceExperience } from 
 import { getMarketplaceExperienceDetails as _getMarketplaceExperienceDetails } from "./marketplace/getMarketplaceExperienceDetails.js";
 
 /**
- * @description Lista templates em que o guia está inscrito
- * @category Marketplace
- * @inputModel {
- *   page: number,
- *   limit: number
- * }
- * @dbTables template_enrollments(SELECT), experience_templates(SELECT), guides(SELECT)
- * @dbProcedures sp_list_enrolled_templates
- * @dbRelations template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id
- */
-import { listEnrolledMarketplaceExperiences as _listEnrolledMarketplaceExperiences } from "./marketplace/listEnrolledMarketplaceExperiences.js";
-
-/**
  * @description Lista experiências de template
  * @category Marketplace
  * @inputModel {
@@ -1991,7 +1978,8 @@ _createAvailabilityMarketplaceExperience.metadata = {
   },
 };
 
-export const createAvailabilityMarketplaceExperience = _createAvailabilityMarketplaceExperience;
+export const createAvailabilityMarketplaceExperience =
+  _createAvailabilityMarketplaceExperience;
 
 _getAvailableDates.metadata = {
   description: " Obter datas disponíveis",
@@ -2082,7 +2070,8 @@ _updateAvailabilityMarketplaceExperience.metadata = {
   },
 };
 
-export const updateAvailabilityMarketplaceExperience = _updateAvailabilityMarketplaceExperience;
+export const updateAvailabilityMarketplaceExperience =
+  _updateAvailabilityMarketplaceExperience;
 
 _createPost.metadata = {
   description: " Criar novo post || Ok",
@@ -2737,30 +2726,40 @@ _createExperience.metadata = {
   description: " Criar nova experiência",
   category: " experiences",
   inputModel: {
-    title: "Título da Experiência",
-    description: "Descrição detalhada da experiência",
-    marketplace_message: "Mensagem para guias que se inscreverem",
-    max_guides: 10,
+    // Informações Básicas
+    title: "Passeio de Barco em Cancun",
+    description:
+      "Uma experiência incrível de passeio de barco pelas águas cristalinas de Cancun",
     duration_minutes: 180,
     min_participants: 1,
     max_participants: 10,
     max_adults: 6,
     max_teens: 2,
     max_children: 2,
+
+    // Itinerário
     itinerary: [
       {
         order: 1,
         title: "Ponto de encontro",
-        description: "Encontro no local X",
+        description: "Encontro no píer principal",
         duration_minutes: 15,
       },
       {
         order: 2,
-        title: "Visita ao local Y",
-        description: "Exploração do local Y",
-        duration_minutes: 60,
+        title: "Passeio de barco",
+        description: "Navegação pelas águas cristalinas",
+        duration_minutes: 120,
+      },
+      {
+        order: 3,
+        title: "Retorno",
+        description: "Retorno ao píer principal",
+        duration_minutes: 45,
       },
     ],
+
+    // Preços
     price_tiers: [
       {
         min_people: 1,
@@ -2771,53 +2770,47 @@ _createExperience.metadata = {
       },
       {
         min_people: 3,
-        max_people: 4,
+        max_people: 6,
         adult_price: 80,
         teen_price: 70,
         child_price: 60,
       },
       {
-        min_people: 5,
+        min_people: 7,
         max_people: 10,
         adult_price: 60,
         teen_price: 50,
         child_price: 0,
       },
     ],
-    cover_image: "[File]",
-    gallery_images: [["[File]"]],
-    training_files: [
-      {
-        title: "Manual de Treinamento",
-        description: "Guia completo para guias",
-        file: "[File]",
-      },
-    ],
-    support_files: [
-      {
-        title: "Mapa do Percurso",
-        description: "Mapa detalhado com pontos de interesse",
-        file: "[File]",
-      },
-    ],
-    quiz_questions: [
-      {
-        question: "Qual é o ponto de encontro?",
-        options: ["Local A", "Local B", "Local C", "Local D"],
-        correct_option: 0,
-        order_index: 1,
-        is_active: true,
-      },
-    ],
-    status: "draft",
-  },
 
+    // Mídia (URLs do Cloudinary)
+    cover_image: "[File]",
+    gallery_images: ["[File]"],
+
+    // Horários de trabalho
+    working_hours: [
+      { day_of_week: 0, start_time: "09:00:00", end_time: "17:00:00" }, // Domingo
+      { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00" }, // Segunda
+      { day_of_week: 5, start_time: "10:00:00", end_time: "18:00:00" }, // Sexta
+    ],
+
+    // Tags (apenas IDs)
+    tag_ids: [
+      "c258e2f7-f580-48ba-abe8-2221a6e9f4f4", // Cancun (city)
+      "05977ef3-1b67-46c4-9135-37e0b88d9404", // Passeio de barco (activity)
+      "ac67afb2-bbc9-4c8d-bc5c-7092f253f18a", // Água e lanches (service_included)
+      "71ce1e06-12b9-46ca-89ec-aaf2c6d030be", // Transporte (service_not_included)
+      "f0e2b081-7c25-4f4b-bea4-fecc919f8acf", // Saber nadar (requisitos_especiais)
+    ],
+
+    // Política de cancelamento (ID)
+    cancellation_policy_id: "949d0e46-62fd-49e9-a074-e307cfd719d5",
+  },
   supabaseInfos: {
-    dbTables:
-      "experiences(INSERT), experience_pricing(INSERT), experience_categories(INSERT), experience_languages(INSERT), experience_included_items(INSERT), experience_excluded_items(INSERT), guides(SELECT), locations(SELECT), categories(SELECT)",
-    dbProcedures: "sp_create_experience",
-    dbRelations:
-      "experiences.guide_id->guides.id, experiences.location_id->locations.id, experiences.id->experience_pricing.experience_id, experiences.id->experience_categories.experience_id, experiences.id->experience_languages.experience_id, experiences.id->experience_included_items.experience_id, experiences.id->experience_excluded_items.experience_id, experience_categories.category_id->categories.id",
+    dbTables: "",
+    dbProcedures: "create_guide_experience",
+    dbRelations: "",
   },
 };
 
@@ -2932,25 +2925,87 @@ _updateExperience.metadata = {
   description: " Atualizar experiência existente",
   category: " experiences",
   inputModel: {
-    experienceId: "exp_123",
-    title: "Título Atualizado",
-    shortDescription: "Nova descrição breve",
-    fullDescription: "Nova descrição completa...",
-    duration: 4, // horas
-    minCapacity: 2,
-    maxCapacity: 12,
-    categoryId: "category_456",
-    locationId: "location_456",
-    meetingPoint: "Novo ponto de encontro",
-    meetingPointCoordinates: {
-      latitude: -23.55052,
-      longitude: -46.633308,
-    },
-    availableLanguages: ["Português", "Inglês", "Espanhol"],
-    servicesIncluded: ["Transporte", "Lanche", "Guia"],
-    servicesNotIncluded: ["Bebidas alcoólicas", "Gorjetas"],
-    transportMode: "Van",
-    isActive: true,
+    experience_id: "301f580d-d70a-44db-84a4-d6a6fd9dca85",
+    // Informações Básicas
+    title: "Passeio de Barco em Cancun",
+    description:
+      "Uma experiência incrível de passeio de barco pelas águas cristalinas de Cancun",
+    duration_minutes: 180,
+    min_participants: 1,
+    max_participants: 10,
+    max_adults: 6,
+    max_teens: 2,
+    max_children: 2,
+
+    // Itinerário
+    itinerary: [
+      {
+        order: 1,
+        title: "Ponto de encontro",
+        description: "Encontro no píer principal",
+        duration_minutes: 15,
+      },
+      {
+        order: 2,
+        title: "Passeio de barco",
+        description: "Navegação pelas águas cristalinas",
+        duration_minutes: 120,
+      },
+      {
+        order: 3,
+        title: "Retorno",
+        description: "Retorno ao píer principal",
+        duration_minutes: 45,
+      },
+    ],
+
+    // Preços
+    price_tiers: [
+      {
+        min_people: 1,
+        max_people: 2,
+        adult_price: 100,
+        teen_price: 90,
+        child_price: 80,
+      },
+      {
+        min_people: 3,
+        max_people: 6,
+        adult_price: 80,
+        teen_price: 70,
+        child_price: 60,
+      },
+      {
+        min_people: 7,
+        max_people: 10,
+        adult_price: 60,
+        teen_price: 50,
+        child_price: 0,
+      },
+    ],
+
+    // Mídia (URLs do Cloudinary)
+    cover_image: "[File]",
+    gallery_images: ["[File]"],
+
+    // Horários de trabalho
+    working_hours: [
+      { day_of_week: 0, start_time: "09:00:00", end_time: "17:00:00" }, // Domingo
+      { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00" }, // Segunda
+      { day_of_week: 5, start_time: "10:00:00", end_time: "18:00:00" }, // Sexta
+    ],
+
+    // Tags (apenas IDs)
+    tag_ids: [
+      "c258e2f7-f580-48ba-abe8-2221a6e9f4f4", // Cancun (city)
+      "05977ef3-1b67-46c4-9135-37e0b88d9404", // Passeio de barco (activity)
+      "ac67afb2-bbc9-4c8d-bc5c-7092f253f18a", // Água e lanches (service_included)
+      "71ce1e06-12b9-46ca-89ec-aaf2c6d030be", // Transporte (service_not_included)
+      "f0e2b081-7c25-4f4b-bea4-fecc919f8acf", // Saber nadar (requisitos_especiais)
+    ],
+
+    // Política de cancelamento (ID)
+    cancellation_policy_id: "949d0e46-62fd-49e9-a074-e307cfd719d5",
   },
 
   supabaseInfos: {
@@ -3314,47 +3369,32 @@ _enrollInMarketplaceExperience.metadata = {
 export const enrollInMarketplaceExperience = _enrollInMarketplaceExperience;
 
 _getMarketplaceExperienceDetails.metadata = {
-  description: " Obter detalhes de um template",
+  description: " Obter detalhes de um Marketplace Experience",
   category: " marketplace",
-  inputModel: { templateId: "template_123" },
+  inputModel: {
+    id: "b3763ebf-9016-4403-8938-020c71da3398", // ID da experiência do marketplace
+  },
 
   supabaseInfos: {
-    dbTables:
-      "experience_templates(SELECT), template_itinerary_items(SELECT), template_pricing(SELECT), template_addons(SELECT), template_images(SELECT), template_categories(SELECT), template_languages(SELECT), template_included_items(SELECT), template_excluded_items(SELECT), locations(SELECT), categories(SELECT)",
-    dbProcedures: "sp_get_template_details",
-    dbRelations:
-      "experience_templates.location_id->locations.id, experience_templates.id->template_itinerary_items.template_id, experience_templates.id->template_pricing.template_id, experience_templates.id->template_addons.template_id, experience_templates.id->template_images.template_id, experience_templates.id->template_categories.template_id, template_categories.category_id->categories.id, experience_templates.id->template_languages.template_id, experience_templates.id->template_included_items.template_id, experience_templates.id->template_excluded_items.template_id",
+    dbTables: "",
+    dbProcedures: "",
+    dbRelations: "",
   },
 };
 
 export const getMarketplaceExperienceDetails = _getMarketplaceExperienceDetails;
 
-_listEnrolledMarketplaceExperiences.metadata = {
-  description: " Listar templates inscritos",
-  category: " marketplace",
-  inputModel: { guideId: "guide_123", page: 1, limit: 10 },
-
-  supabaseInfos: {
-    dbTables:
-      "template_enrollments(SELECT), experience_templates(SELECT), guides(SELECT)",
-    dbProcedures: "sp_list_enrolled_templates",
-    dbRelations:
-      "template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id",
-  },
-};
-
-export const listEnrolledMarketplaceExperiences = _listEnrolledMarketplaceExperiences;
-
 _listMarketplaceExperiences.metadata = {
   description: " Listar experiências do marketplace",
   category: " marketplace",
   inputModel: {
-    category: "Aventura",
-    location: "São Paulo",
-    minDuration: 2,
-    maxDuration: 8,
-    page: 1,
-    limit: 10,
+    // Todos os filtros são opcionais
+    search: "mergulho", // Busca por nome/descrição
+    enrolled: true,
+    min_duration: 2, // Duração mínima em horas
+    max_duration: 6, // Duração máxima em horas
+    page: 1, // Página atual (para paginação)
+    limit: 10, // Itens por página
   },
 
   supabaseInfos: {
@@ -3372,21 +3412,18 @@ _unenrollFromMarketplaceExperience.metadata = {
   description: " Cancelar inscrição em um template",
   category: " marketplace",
   inputModel: {
-    guideId: "guide_123",
-    templateId: "template_123",
-    reason: "Não ofereço mais este tipo de experiência",
+    experience_id: "b3763ebf-9016-4403-8938-020c71da3398", // ID da experiência do marketplace
   },
 
   supabaseInfos: {
-    dbTables:
-      "template_enrollments(SELECT,DELETE), experience_templates(SELECT), guides(SELECT)",
-    dbProcedures: "sp_unenroll_from_template",
-    dbRelations:
-      "template_enrollments.template_id->experience_templates.id, template_enrollments.guide_id->guides.id",
+    dbTables: "",
+    dbProcedures: "",
+    dbRelations: "",
   },
 };
 
-export const unenrollFromMarketplaceExperience = _unenrollFromMarketplaceExperience;
+export const unenrollFromMarketplaceExperience =
+  _unenrollFromMarketplaceExperience;
 
 _getUnreadNotifications.metadata = {
   description: " Obter notificações não lidas",

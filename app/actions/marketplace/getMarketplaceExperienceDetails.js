@@ -1,35 +1,34 @@
-'use server'
+"use server";
 
 /**
- * @description Obter detalhes de um template
- * @category marketplace
+ * @description Obter detalhes completos de uma experiência do marketplace
+ * @category Experiences
+ * @supabaseInfos {
+ *   dbTables: experiences(SELECT), experience_price_tiers(SELECT), experience_quiz_questions(SELECT), guide_experience_enrollments(SELECT),
+ *   dbRelations: experiences->experience_price_tiers, experiences->experience_quiz_questions, experiences->guide_experience_enrollments
+ * }
  * @inputModel {
-  templateId: 'template_123'
-}
+ *   "id": "uuid-da-experiencia"
+ * }
  */
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireAuth } from "@/lib/withAuth";
 
-// Schema para validação
+// Esquema de validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  id: z.string().uuid({
+    message: "ID da experiência inválido",
+  }),
 });
 
-export async function getTemplateDetails(prevState, formData) {
+export async function getMarketplaceExperienceDetails(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
-    console.log('Dados recebidos:', rawData);
+    console.log("Dados recebidos:", rawData);
 
-    // Validação dos dados do formulário  
+    // Validação dos dados
     const validation = schema.safeParse(rawData);
 
     // Se houver erro de validação, retorna imediatamente com os erros
@@ -41,36 +40,145 @@ export async function getTemplateDetails(prevState, formData) {
     }
 
     // Dados validados
-    const data = validation.data;
+    const { id } = validation.data;
 
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
+    // Obter informações de autenticação (se disponível)
+    const { user, profile, supabase } = await requireAuth();
 
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
-    
-    return { 
+    // Verificar se a experiência existe e é do marketplace
+    const { data: experience, error: experienceError } = await supabase
+      .from("experiences")
+      .select("*")
+      .eq("id", id)
+      .eq("marketplace", true)
+      .single();
+
+    if (experienceError || !experience) {
+      return {
+        success: false,
+        errors: {
+          _form: "Experiência do marketplace não encontrada",
+        },
+      };
+    }
+
+    // Buscar faixas de preço
+    const { data: priceTiers, error: priceTiersError } = await supabase
+      .from("experience_price_tiers")
+      .select("*")
+      .eq("experience_id", id)
+      .order("min_people", { ascending: true });
+
+    if (priceTiersError) {
+      console.error("Erro ao buscar faixas de preço:", priceTiersError);
+    }
+
+    // Buscar perguntas do quiz
+    const { data: quizQuestions, error: quizQuestionsError } = await supabase
+      .from("experience_quiz_questions")
+      .select("*")
+      .eq("experience_id", id)
+      .order("order_index", { ascending: true });
+
+    if (quizQuestionsError) {
+      console.error("Erro ao buscar perguntas do quiz:", quizQuestionsError);
+    }
+
+    // Verificar se o usuário está autenticado e é um guia
+    let userEnrollment = null;
+    let isEnrolled = false;
+    let enrollmentCount = 0;
+
+    // Buscar contagem de inscrições
+    const { count, error: countError } = await supabase
+      .from("guide_experience_enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("experience_id", id);
+
+    if (!countError) {
+      enrollmentCount = count;
+    }
+
+    // Se o usuário estiver autenticado, verificar se já está inscrito
+    // Se o usuário estiver autenticado, verificar se já está inscrito
+    if (user) {
+      console.log(
+        "Verificando inscrição para o usuário:",
+        user.id,
+        "na experiência:",
+        id
+      );
+
+      // Primeiro, vamos fazer uma consulta direta para verificar se o registro existe
+      const { data: enrollmentCheck, error: checkError } = await supabase
+        .from("guide_experience_enrollments")
+        .select("id")
+        .eq("guide_id", user.id)
+        .eq("experience_id", id);
+
+      console.log(
+        "Resultado da verificação direta:",
+        enrollmentCheck,
+        checkError
+      );
+
+      // Agora, buscar os detalhes completos se existir
+      if (enrollmentCheck && enrollmentCheck.length > 0) {
+        // Buscar detalhes da inscrição
+        const { data: enrollment, error: enrollmentError } = await supabase
+          .from("guide_experience_enrollments")
+          .select("*")
+          .eq("id", enrollmentCheck[0].id)
+          .single();
+
+        console.log("Detalhes da inscrição:", enrollment, enrollmentError);
+
+        // Buscar horários de trabalho separadamente
+        const { data: workingHours, error: workingHoursError } = await supabase
+          .from("guide_experience_working_hours")
+          .select("*")
+          .eq("guide_id", user.id)
+          .eq("experience_id", id);
+
+        console.log("Horários de trabalho:", workingHours, workingHoursError);
+
+        if (!enrollmentError && enrollment) {
+          userEnrollment = {
+            ...enrollment,
+            working_hours: workingHours || [],
+          };
+          isEnrolled = true;
+        }
+      }
+    }
+
+    // Construir resposta
+    return {
       success: true,
-      message: "getTemplateDetails executado com sucesso",
-      // Dados adicionais que você queira retornar
+      data: {
+        experience,
+        price_tiers: priceTiers || [],
+        quiz_questions: quizQuestions || [],
+        enrollment_count: enrollmentCount,
+        max_guides_reached: enrollmentCount >= experience.max_guides,
+        user_info: user
+          ? {
+              is_enrolled: isEnrolled,
+              enrollment: userEnrollment,
+              can_enroll:
+                profile?.user_type === "guide" &&
+                !isEnrolled &&
+                enrollmentCount < experience.max_guides,
+            }
+          : null,
+      },
     };
-
   } catch (error) {
-    console.error("getTemplateDetails error:", error);
+    console.error("getMarketplaceExperienceDetails error:", error);
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar getTemplateDetails. Tente novamente.",
+        _form: "Erro ao obter detalhes da experiência. Tente novamente.",
       },
     };
   }

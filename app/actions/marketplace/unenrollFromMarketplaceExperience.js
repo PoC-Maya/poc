@@ -1,37 +1,36 @@
 'use server'
 
 /**
- * @description Cancelar inscrição em um template
- * @category marketplace
- * @inputModel {
-  guideId: 'guide_123',
-  templateId: 'template_123',
-  reason: 'Não ofereço mais este tipo de experiência'
-}
- */
+* @description Cancelar a inscrição de um guia em uma experiência do marketplace
+* @category Experiences
+* @supabaseInfos {
+*   dbTables: guide_experience_enrollments(DELETE), guide_experience_working_hours(DELETE),
+*   dbProcedures: begin_transaction, commit_transaction, rollback_transaction,
+*   dbRelations: guide_experience_enrollments->experiences, guide_experience_working_hours->experiences
+* }
+* @inputModel {
+*   "experience_id": "uuid-da-experiencia"
+* }
+*/
 
-import { requireAuth } from "@/lib/withAuth";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/lib/withAuth";
 
-// Schema para validação
+// Esquema de validação
 const schema = z.object({
-  // Defina aqui o schema de validação específico para esta action
-  // Exemplo:
-  // name: z.string().min(3, "Nome muito curto").max(100),
-  // email: z.string().email("Email inválido"),
+  experience_id: z.string().uuid({
+    message: "ID da experiência inválido"
+  })
 });
 
-export async function unenrollFromTemplate(prevState, formData) {
+export async function unenrollFromMarketplaceExperience(prevState, formData) {
   try {
-    // Pega o usuário autenticado e o perfil do usuário
-    const { user, profile, supabase } = await requireAuth();
-
     // Extrair dados do FormData
     const rawData = Object.fromEntries(formData.entries());
     console.log('Dados recebidos:', rawData);
 
-    // Validação dos dados do formulário  
+    // Validação dos dados
     const validation = schema.safeParse(rawData);
 
     // Se houver erro de validação, retorna imediatamente com os erros
@@ -43,36 +42,126 @@ export async function unenrollFromTemplate(prevState, formData) {
     }
 
     // Dados validados
-    const data = validation.data;
-
-    // Implementar lógica específica da action aqui
-    // Exemplo:
-    // const { error } = await supabase
-    //   .from("tabela")
-    //   .update({
-    //     campo1: data.campo1,
-    //     campo2: data.campo2,
-    //     updated_at: new Date().toISOString(),
-    //   })
-    //   .eq("id", algumId);
-    //
-    // if (error) throw error;
-
-    // Revalidar caminhos relevantes
-    // revalidatePath('/caminho-relevante');
+    const { experience_id } = validation.data;
     
-    return { 
-      success: true,
-      message: "unenrollFromTemplate executado com sucesso",
-      // Dados adicionais que você queira retornar
-    };
-
+    // Pega o usuário autenticado e o cliente Supabase
+    const { user, profile, supabase } = await requireAuth();
+    
+    // Verificar se o usuário é um guia
+    if (profile.user_type !== 'guide') {
+      return {
+        success: false,
+        errors: {
+          _form: "Apenas guias podem cancelar inscrições em experiências do marketplace",
+        },
+      };
+    }
+    
+    // Verificar se a experiência existe e é do marketplace
+    const { data: experience, error: experienceError } = await supabase
+      .from('experiences')
+      .select('id, title, marketplace')
+      .eq('id', experience_id)
+      .eq('marketplace', true)
+      .single();
+    
+    if (experienceError || !experience) {
+      return {
+        success: false,
+        errors: {
+          _form: "Experiência do marketplace não encontrada",
+        },
+      };
+    }
+    
+    // Verificar se o guia está inscrito nesta experiência
+    const { data: enrollment, error: enrollmentError } = await supabase
+      .from('guide_experience_enrollments')
+      .select('id')
+      .eq('guide_id', user.id)
+      .eq('experience_id', experience_id)
+      .single();
+    
+    if (enrollmentError || !enrollment) {
+      return {
+        success: false,
+        errors: {
+          _form: "Você não está inscrito nesta experiência",
+        },
+      };
+    }
+    
+    // Iniciar uma transação
+    const { error: transactionError } = await supabase.rpc('begin_transaction');
+    
+    if (transactionError) {
+      console.error("Erro ao iniciar transação:", transactionError);
+      return {
+        success: false,
+        errors: {
+          _form: "Erro ao iniciar transação: " + transactionError.message,
+        },
+      };
+    }
+    
+    try {
+      // PASSO 1: Excluir os horários de trabalho
+      const { error: deleteWorkingHoursError } = await supabase
+        .from('guide_experience_working_hours')
+        .delete()
+        .eq('guide_id', user.id)
+        .eq('experience_id', experience_id);
+      
+      if (deleteWorkingHoursError) {
+        throw new Error("Erro ao excluir horários de trabalho: " + deleteWorkingHoursError.message);
+      }
+      
+      // PASSO 2: Excluir a inscrição
+      const { error: deleteEnrollmentError } = await supabase
+        .from('guide_experience_enrollments')
+        .delete()
+        .eq('id', enrollment.id);
+      
+      if (deleteEnrollmentError) {
+        throw new Error("Erro ao excluir inscrição: " + deleteEnrollmentError.message);
+      }
+      
+      // Confirmar a transação
+      const { error: commitError } = await supabase.rpc('commit_transaction');
+      
+      if (commitError) {
+        throw new Error("Erro ao confirmar transação: " + commitError.message);
+      }
+      
+      // Revalidar o caminho para atualizar os dados na UI
+      revalidatePath('/guide/experiences');
+      revalidatePath('/experiences/marketplace');
+      
+      return { 
+        success: true,
+        message: `Inscrição na experiência "${experience.title}" cancelada com sucesso!`,
+        data: {
+          experience_id: experience_id
+        }
+      };
+    } catch (error) {
+      // Reverter a transação em caso de erro
+      await supabase.rpc('rollback_transaction');
+      
+      console.error("unenrollFromMarketplaceExperience error:", error);
+      return {
+        success: false,
+        errors: {
+          _form: error.message || "Erro ao cancelar inscrição na experiência. Tente novamente.",
+        },
+      };
+    }
   } catch (error) {
-    console.error("unenrollFromTemplate error:", error);
+    console.error("unenrollFromMarketplaceExperience error:", error);
     return {
       success: false,
       errors: {
-        _form: "Erro ao executar unenrollFromTemplate. Tente novamente.",
+        _form: "Erro ao cancelar inscrição na experiência. Tente novamente.",
       },
     };
   }
