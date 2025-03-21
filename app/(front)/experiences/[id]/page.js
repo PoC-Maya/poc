@@ -1,33 +1,18 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  Clock,
-  MapPin,
-  Star,
-  Users,
-  Calendar,
-  ChevronRight,
-  Heart,
-  Share2,
-  CheckCircle,
-  XCircle,
-  MessageSquare,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { PhotoGalleryModal } from "@/components/experiences/photo-gallery-modal";
-import { DateSelectionDrawer } from "@/components/experiences/date-selection-drawer";
-import { ParticipantsSelectionDrawer } from "@/components/experiences/participants-selection-drawer";
-import { GuideSelectionDrawer } from "@/components/experiences/guide-selection-drawer";
-import { MeetingPointMap } from "@/components/experiences/meeting-point-map";
-import { CollapsiblePanel } from "@/components/ui/collapsible-panel";
-import { useRouter } from "next/navigation";
-// Dados de exemplo
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Clock, MapPin, Star, Users, Heart, Share2, Check, XIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { DisponibilidadModal } from "@/components/experiences/DisponibilidadModal"
+import { ImageCarousel } from "@/components/experiences/ImageCarousel"
+import { ReviewCard } from "@/components/experiences/ReviewCard"
+import { GuidePreviewCard } from "@/components/experiences/GuidePreviewCard"
+import { BookingCard } from "@/components/experiences/BookingCard"
+
+// Dados de exemplo da experiência
 const tourData = {
   id: "1",
   title: "Chichen Itza, Cenote e Valladolid - Tour Completo",
@@ -85,8 +70,7 @@ const tourData = {
     {
       time: "15:00 - 16:00",
       title: "Cenote",
-      description:
-        "Visita a um cenote sagrado com tempo para nadar nas águas cristalinas.",
+      description: "Visita a um cenote sagrado com tempo para nadar nas águas cristalinas.",
     },
     {
       time: "16:30 - 17:30",
@@ -119,6 +103,20 @@ const tourData = {
       reviewCount: 320,
       languages: ["Português", "Inglês", "Espanhol"],
       specialties: ["História Maia", "Arqueologia", "Fotografia"],
+      timeSlots: [
+        "08:00 a.m.",
+        "08:30 a.m.",
+        "09:00 a.m.",
+        "09:30 a.m.",
+        "10:00 a.m.",
+        "10:30 a.m.",
+        "11:00 a.m.",
+        "03:00 p.m.",
+        "03:30 p.m.",
+        "04:00 p.m.",
+      ],
+      description:
+        "Arqueólogo de formação e guia há 15 anos. Especialista em história maia e conhecedor de todos os detalhes de Chichen Itza e outras ruínas da região.",
     },
     {
       id: "2",
@@ -128,6 +126,20 @@ const tourData = {
       reviewCount: 275,
       languages: ["Inglês", "Espanhol"],
       specialties: ["Cultura Local", "Gastronomia", "História"],
+      timeSlots: [
+        "12:00 p.m.",
+        "12:30 p.m.",
+        "01:00 p.m.",
+        "01:30 p.m.",
+        "02:00 p.m.",
+        "04:30 p.m.",
+        "05:00 p.m.",
+        "05:30 p.m.",
+        "06:00 p.m.",
+        "06:30 p.m.",
+      ],
+      description:
+        "Nascida e criada em Tulum, conheço todos os segredos da região. Adoro compartilhar a cultura maia e mostrar os lugares mais incríveis da península de Yucatán.",
     },
   ],
   reviews: [
@@ -146,8 +158,7 @@ const tourData = {
       avatar: "/placeholder.svg?height=100&width=100",
       rating: 4,
       date: "Maio 2023",
-      comment:
-        "Tour muito bom, mas achei o tempo em Valladolid um pouco curto. De resto, tudo perfeito!",
+      comment: "Tour muito bom, mas achei o tempo em Valladolid um pouco curto. De resto, tudo perfeito!",
     },
     {
       id: "3",
@@ -159,623 +170,301 @@ const tourData = {
         "Vale cada centavo! A Maria foi uma guia excelente, muito simpática e com um conhecimento impressionante sobre a cultura maia.",
     },
   ],
-};
+  cancellationPolicy: {
+    freeCancellation: true,
+    freeCancellationPeriod: "até 24 horas antes",
+    partialRefund: "50% até 12 horas antes",
+    noRefund: "menos de 12 horas antes",
+  },
+  recentBookings: 18,
+  recentViews: 42,
+  availableSpots: 5,
+  paymentOptions: {
+    installments: 10,
+    acceptedCards: ["Visa", "Mastercard", "American Express"],
+  },
+}
 
-const ExperienceCard = ({
-  id,
-  title,
-  image,
-  price,
-  originalPrice,
-  rating,
-  reviewCount,
-  duration,
-  location,
-}) => (
-  <Link
-    href={`/experiences/${id}`}
-    className="block border rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow"
-  >
-    <div className="relative h-48 w-full">
-      <Image
-        src={image || "/placeholder.svg"}
-        alt={title}
-        fill
-        className="object-cover"
-      />
-    </div>
-    <div className="p-4">
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <div className="flex items-center mb-2">
-        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mr-1" />
-        <span className="text-sm font-medium">{rating}</span>
-        <span className="text-xs text-muted-foreground ml-1">
-          ({reviewCount})
-        </span>
-      </div>
-      <div className="flex items-center text-sm text-muted-foreground mb-2">
-        <Clock className="w-4 h-4 mr-1" />
-        <span>{duration}</span>
-        <MapPin className="w-4 h-4 mx-2" />
-        <span>{location}</span>
-      </div>
-      <div className="flex items-baseline">
-        {originalPrice && (
-          <span className="text-sm line-through text-muted-foreground mr-2">
-            R$ {originalPrice.toLocaleString("pt-BR")}
-          </span>
-        )}
-        <span className="text-xl font-bold">
-          R$ {price.toLocaleString("pt-BR")}
-        </span>
-      </div>
-    </div>
-  </Link>
-);
+export default function ExperiencePage({ params }) {
+  const router = useRouter()
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [isMobile, setIsMobile] = useState(true)
 
-export default function ExperienceDetailPage({ params }) {
-  const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  // Estado para controlar o modal de disponibilidade
+  const [isDisponibilidadOpen, setIsDisponibilidadOpen] = useState(false)
 
-  // Estados para os drawers
-  const [isDateDrawerOpen, setIsDateDrawerOpen] = useState(false);
-  const [isParticipantsDrawerOpen, setIsParticipantsDrawerOpen] =
-    useState(false);
-  const [isGuideDrawerOpen, setIsGuideDrawerOpen] = useState(false);
-
-  // Estados para os dados selecionados
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  // Estados para armazenar as seleções do usuário
+  const [selectedDate, setSelectedDate] = useState(new Date(2025, 3, 16)) // 16 de abril de 2025
   const [selectedParticipants, setSelectedParticipants] = useState({
-    adults: 1,
-    teens: 0,
-    children: 0,
-  });
-  const [selectedGuide, setSelectedGuide] = useState(null);
+    adults: 2,
+    teens: 1,
+    children: 1,
+  })
+  const [selectedGuide, setSelectedGuide] = useState(null)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null)
 
-  const handleDateSelect = ({ date, time }) => {
-    if (date && time) {
-      setSelectedDate(date);
-      setSelectedTime(time);
-      console.log("Data selecionada:", date, "Horário:", time);
+  // Verificar se é mobile ou desktop
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
     }
-  };
 
-  const handleParticipantsSelect = (participants) => {
-    setSelectedParticipants(participants);
-  };
+    checkIfMobile()
+    window.addEventListener("resize", checkIfMobile)
 
-  const handleGuideSelect = (guide) => {
-    setSelectedGuide(guide);
-  };
+    return () => {
+      window.removeEventListener("resize", checkIfMobile)
+    }
+  }, [])
 
-  const handleReservation = () => {
-    // Aqui você pode redirecionar para a página de checkout com os dados selecionados
-    const checkoutData = {
-      tourId: tourData.id,
-      date: selectedDate,
-      time: selectedTime,
-      participants: selectedParticipants,
-      guideId: selectedGuide?.id,
-    };
+  // Função para iniciar o fluxo de reserva
+  const handleStartBooking = () => {
+    setIsDisponibilidadOpen(true)
+  }
 
-    console.log("Checkout data:", checkoutData);
-    // Redirecionar para a página de checkout
-    // router.push(`/checkout/${tourData.id}?data=${encodeURIComponent(JSON.stringify(checkoutData))}`)
-    router.push(`/checkout/${tourData.id}`);
-  };
+  // Handler para a seleção de guia e horário
+  const handleGuideSelection = ({ guide, timeSlot, date, participants }) => {
+    setSelectedGuide(guide)
+    setSelectedTimeSlot(timeSlot)
 
-  const isReservationComplete = selectedDate && selectedTime && selectedGuide;
+    if (date) setSelectedDate(date)
+    if (participants) setSelectedParticipants(participants)
+
+    // Redirecionar para a página de checkout/summary
+    router.push(`/checkout/summary?experienceId=${tourData.id}`)
+  }
+
+  // Calcular desconto
+  const discountPercentage = tourData.originalPrice
+    ? Math.round(((tourData.originalPrice - tourData.price) / tourData.originalPrice) * 100)
+    : 0
 
   return (
-    <div className="container py-6 md:py-8">
-      {/* Breadcrumbs */}
-      <div className="flex items-center text-sm mb-4">
-        <Link href="/" className="text-muted-foreground hover:text-foreground">
-          Início
-        </Link>
-        <ChevronRight className="w-4 h-4 mx-1 text-muted-foreground" />
-        <Link
-          href="/experiences"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          Experiências
-        </Link>
-        <ChevronRight className="w-4 h-4 mx-1 text-muted-foreground" />
-        <span className="text-foreground truncate max-w-[200px]">
-          {tourData.title}
-        </span>
-      </div>
+    <div className="pb-24 lg:pb-0">
+      {/* Carrossel de imagens */}
+      <div className="relative">
+        <ImageCarousel images={tourData.images} />
 
-      {/* Título e Avaliações */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">{tourData.title}</h1>
-        <div className="flex items-center mt-2 md:mt-0">
-          <div className="flex items-center mr-4">
-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mr-1" />
-            <span className="font-medium">{tourData.rating}</span>
-            <span className="text-muted-foreground ml-1">
-              ({tourData.reviewCount})
-            </span>
-          </div>
+        <div className="absolute top-4 right-4 flex space-x-2 z-10">
           <Button
             variant="ghost"
             size="icon"
-            className="mr-2"
+            className="bg-white/80 hover:bg-white rounded-full"
             onClick={() => setIsFavorite(!isFavorite)}
           >
-            <Heart
-              className={`w-5 h-5 ${
-                isFavorite ? "fill-red-500 text-red-500" : ""
-              }`}
-            />
+            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
           </Button>
-          <Button variant="ghost" size="icon">
-            <Share2 className="w-5 h-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="bg-white/80 hover:bg-white rounded-full"
+            onClick={() => setIsSharing(!isSharing)}
+          >
+            <Share2 className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      {/* Galeria de Imagens */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div
-          className="md:col-span-2 relative rounded-lg overflow-hidden h-[300px] md:h-[400px] cursor-pointer"
-          onClick={() => setIsGalleryOpen(true)}
-        >
-          <Image
-            src={tourData.images[selectedImage] || "/placeholder.svg"}
-            alt={tourData.title}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Button variant="secondary">Ver todas as fotos</Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {tourData.images.slice(0, 4).map((image, index) => (
-            <div
-              key={index}
-              className="relative rounded-lg overflow-hidden h-[145px] md:h-[195px] cursor-pointer"
-              onClick={() => {
-                setSelectedImage(index);
-                setIsGalleryOpen(true);
-              }}
-            >
-              <Image
-                src={image || "/placeholder.svg"}
-                alt={`${tourData.title} - Imagem ${index + 1}`}
-                fill
-                className={`object-cover transition-opacity ${
-                  selectedImage === index ? "opacity-100" : "opacity-80"
-                }`}
-              />
-              {index === 3 && tourData.images.length > 4 && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-medium">
-                  +{tourData.images.length - 4} fotos
-                </div>
-              )}
+      {/* Layout de duas colunas para desktop */}
+      <div className="lg:flex lg:gap-8 lg:px-8 lg:py-8">
+        {/* Coluna principal de conteúdo */}
+        <div className="lg:w-2/3 px-4 py-6 lg:p-0">
+          {/* Cabeçalho */}
+          <div className="mb-6">
+            {discountPercentage > 0 && <Badge className="bg-red-500 text-white mb-2">{discountPercentage}% OFF</Badge>}
+
+            <h1 className="text-2xl lg:text-3xl font-bold mb-2">{tourData.title}</h1>
+
+            <div className="flex items-center mb-3">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mr-1" />
+              <span className="font-medium">{tourData.rating}</span>
+              <span className="text-gray-500 ml-1">({tourData.reviewCount} avaliações)</span>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Informações Principais e Reserva */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-2">
-          {/* Informações Básicas */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">Duração</span>
-              <div className="flex items-center mt-1">
-                <Clock className="w-4 h-4 mr-1 text-primary" />
+            <div className="flex flex-wrap gap-y-2">
+              <div className="flex items-center mr-4">
+                <Clock className="w-5 h-5 text-gray-500 mr-2" />
                 <span>{tourData.duration}</span>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">Idiomas</span>
-              <div className="flex items-center mt-1">
-                <MessageSquare className="w-4 h-4 mr-1 text-primary" />
-                <span>{tourData.languages.join(", ")}</span>
+              <div className="flex items-center mr-4">
+                <MapPin className="w-5 h-5 text-gray-500 mr-2" />
+                <span>{tourData.location}</span>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">
-                Tamanho do Grupo
-              </span>
-              <div className="flex items-center mt-1">
-                <Users className="w-4 h-4 mr-1 text-primary" />
+              <div className="flex items-center">
+                <Users className="w-5 h-5 text-gray-500 mr-2" />
                 <span>{tourData.groupSize}</span>
               </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-muted-foreground text-sm">Local</span>
-              <div className="flex items-center mt-1">
-                <MapPin className="w-4 h-4 mr-1 text-primary" />
-                <span>{tourData.location}</span>
-              </div>
-            </div>
           </div>
 
-          {/* Descrição */}
-          <CollapsiblePanel title="Sobre esta experiência" className="mb-6">
-            <p className="text-muted-foreground">{tourData.description}</p>
+          {/* Seção: Sobre esta experiência */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-3">Sobre esta experiência</h2>
+            <p className="text-gray-700">{tourData.description}</p>
+          </section>
 
-            <h3 className="text-lg font-semibold mt-6 mb-3">
-              Ponto de Encontro
-            </h3>
-            <MeetingPointMap
-              location={tourData.meetingPoint}
-              coordinates={tourData.meetingPointCoordinates}
-            />
-          </CollapsiblePanel>
+          <Separator className="my-6" />
 
-          {/* Itinerário */}
-          <CollapsiblePanel title="Itinerário Detalhado" className="mb-6">
+          {/* Seção: Ponto de encontro */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-3">Ponto de encontro</h2>
+            <div className="flex items-start">
+              <MapPin className="w-5 h-5 text-gray-500 mr-2 mt-1 flex-shrink-0" />
+              <p className="text-gray-700">{tourData.meetingPoint}</p>
+            </div>
+
+            {/* Aqui poderia ser adicionado um mapa com as coordenadas */}
+            <div className="mt-3 bg-gray-200 rounded-lg h-40 flex items-center justify-center">
+              <span className="text-gray-500">Mapa do ponto de encontro</span>
+            </div>
+          </section>
+
+          <Separator className="my-6" />
+
+          {/* Seção: Idiomas disponíveis */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-3">Idiomas disponíveis</h2>
+            <div className="flex flex-wrap gap-2">
+              {tourData.languages.map((language, index) => (
+                <Badge key={index} variant="outline" className="bg-gray-100 px-3 py-1">
+                  {language}
+                </Badge>
+              ))}
+            </div>
+          </section>
+
+          <Separator className="my-6" />
+
+          {/* Seção: O que está incluído/não incluído */}
+          <section className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-3">O que está incluído</h2>
+              <ul className="space-y-2">
+                {tourData.inclusions.map((item, index) => (
+                  <li key={index} className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold mb-3">O que não está incluído</h2>
+              <ul className="space-y-2">
+                {tourData.exclusions.map((item, index) => (
+                  <li key={index} className="flex items-start">
+                    <XIcon className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <Separator className="my-6" />
+
+          {/* Seção: Itinerário */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Itinerário do tour</h2>
             <div className="space-y-6">
               {tourData.itinerary.map((item, index) => (
-                <div key={index} className="flex">
-                  <div className="mr-4 text-right min-w-[100px]">
-                    <span className="text-sm font-medium">{item.time}</span>
+                <div key={index} className="relative pl-8 pb-6">
+                  {/* Linha vertical conectando os itens */}
+                  {index < tourData.itinerary.length - 1 && (
+                    <div className="absolute left-3 top-3 bottom-0 w-0.5 bg-gray-200"></div>
+                  )}
+
+                  {/* Círculo marcador */}
+                  <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-white">
+                    {index + 1}
                   </div>
-                  <div className="relative pl-6 pb-6 border-l border-primary/30">
-                    <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-primary"></div>
-                    <h4 className="font-medium">{item.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.description}
-                    </p>
+
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1">{item.time}</div>
+                    <h3 className="text-lg font-semibold mb-1">{item.title}</h3>
+                    <p className="text-gray-700">{item.description}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </CollapsiblePanel>
+          </section>
 
-          {/* Inclusões */}
-          <CollapsiblePanel title="O que está incluído" className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-3">
-                  O que está incluído
-                </h3>
-                <ul className="space-y-2">
-                  {tourData.inclusions.map((item, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <Separator className="my-6" />
 
-              <div>
-                <h3 className="text-lg font-semibold mb-3">
-                  O que não está incluído
-                </h3>
-                <ul className="space-y-2">
-                  {tourData.exclusions.map((item, index) => (
-                    <li key={index} className="flex items-start">
-                      <XCircle className="w-5 h-5 mr-2 text-red-500 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* Seção: Guias disponíveis */}
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Guias disponíveis</h2>
+            <div className="space-y-4">
+              {tourData.guides.map((guide) => (
+                <GuidePreviewCard key={guide.id} guide={guide} />
+              ))}
             </div>
-          </CollapsiblePanel>
+          </section>
 
-          {/* Avaliações */}
-          <CollapsiblePanel title="Avaliações" className="mb-6">
-            <div className="flex items-center mb-4">
-              <div className="flex items-center mr-4">
+          <Separator className="my-6" />
+
+          {/* Seção: Avaliações */}
+          <section className="mb-8">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold mb-2">Avaliações</h2>
+              <div className="flex items-center">
                 <Star className="w-6 h-6 text-yellow-500 fill-yellow-500 mr-1" />
-                <span className="text-2xl font-bold">{tourData.rating}</span>
-              </div>
-              <div className="text-muted-foreground">
-                {tourData.reviewCount} avaliações
+                <span className="text-2xl font-bold mr-2">{tourData.rating}</span>
+                <span className="text-gray-500">({tourData.reviewCount} avaliações)</span>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {tourData.reviews.map((review) => (
-                <div key={review.id} className="border-b pb-4">
-                  <div className="flex items-start">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
-                      <Image
-                        src={review.avatar || "/placeholder.svg"}
-                        alt={review.user}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center">
-                        <h4 className="font-medium">{review.user}</h4>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {review.date}
-                        </span>
-                      </div>
-                      <div className="flex items-center mt-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating
-                                ? "text-yellow-500 fill-yellow-500"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="mt-2 text-muted-foreground">
-                        {review.comment}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <ReviewCard key={review.id} review={review} />
               ))}
+
+              <Button variant="outline" className="w-full">
+                Ver todas as avaliações
+              </Button>
             </div>
-
-            <Button variant="outline" className="mt-4 w-full">
-              Ver todas as avaliações
-            </Button>
-          </CollapsiblePanel>
-
-          {/* Guias */}
-          <CollapsiblePanel title="Guias Disponíveis" className="mb-6">
-            <ScrollArea className="w-full pb-4">
-              <div className="flex space-x-4">
-                {tourData.guides.map((guide) => (
-                  <div
-                    key={guide.id}
-                    className="flex-shrink-0 w-64 border rounded-lg overflow-hidden bg-white"
-                  >
-                    <div className="relative h-40 w-full">
-                      <Image
-                        src={guide.image || "/placeholder.svg"}
-                        alt={guide.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-lg">{guide.name}</h4>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                          <span className="text-sm ml-1">{guide.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Idiomas: {guide.languages.join(", ")}
-                      </p>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {guide.specialties.map((specialty, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {specialty}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Link href={`/guides/${guide.id}`}>
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ver perfil
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </CollapsiblePanel>
+          </section>
         </div>
 
-        {/* Card de Reserva */}
-        <div className="lg:col-span-1">
-          <div className="border rounded-lg p-4 sticky top-20">
-            <div className="flex items-baseline mb-4">
-              {tourData.originalPrice && (
-                <span className="text-sm line-through text-muted-foreground mr-2">
-                  R$ {tourData.originalPrice.toLocaleString("pt-BR")}
-                </span>
-              )}
-              <span className="text-2xl font-bold">
-                R$ {tourData.price.toLocaleString("pt-BR")}
-              </span>
-              <span className="text-sm text-muted-foreground ml-1">
-                por pessoa
-              </span>
-            </div>
-
-            <Separator className="mb-4" />
-
-            <div className="space-y-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Data e Horário
-                </label>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setIsDateDrawerOpen(true)}
-                >
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>
-                      {selectedDate && selectedTime
-                        ? `${selectedDate.toLocaleDateString(
-                            "pt-BR"
-                          )} às ${selectedTime}`
-                        : "Selecione uma data e horário"}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Participantes
-                </label>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setIsParticipantsDrawerOpen(true)}
-                >
-                  <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2" />
-                    <span>
-                      {selectedParticipants.adults +
-                        selectedParticipants.teens +
-                        selectedParticipants.children >
-                      0
-                        ? `${
-                            selectedParticipants.adults +
-                            selectedParticipants.teens +
-                            selectedParticipants.children
-                          } participantes`
-                        : "Adicionar participantes"}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Guia</label>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setIsGuideDrawerOpen(true)}
-                >
-                  <div className="flex items-center">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    <span>
-                      {selectedGuide ? selectedGuide.name : "Escolha seu guia"}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <Button
-              className="w-full mb-4"
-              disabled={!isReservationComplete}
-              onClick={handleReservation}
-            >
-              Reservar agora
-            </Button>
-
-            <p className="text-xs text-center text-muted-foreground mb-4">
-              Você não será cobrado ainda. O pagamento será feito após a
-              confirmação.
-            </p>
-
-            <div className="bg-muted p-3 rounded-md">
-              <h4 className="font-medium mb-2">Política de Cancelamento</h4>
-              <p className="text-xs text-muted-foreground">
-                Cancelamento gratuito até 48 horas antes. Após esse período,
-                será cobrada uma taxa de 50% do valor total. Não comparecimento
-                ou cancelamento no dia da experiência não terá reembolso.
-              </p>
-            </div>
+        {/* Coluna lateral com o box de reserva (apenas desktop) */}
+        <div className="hidden lg:block lg:w-1/3">
+          <div className="sticky top-8">
+            <BookingCard tour={tourData} onBookNow={handleStartBooking} />
           </div>
         </div>
       </div>
 
-      {/* Experiências Relacionadas */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">Você também pode gostar</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ExperienceCard
-            id="2"
-            title="Passeio de Catamarã em Isla Mujeres com Snorkeling"
-            image="/placeholder.svg?height=400&width=600"
-            price={1250.0}
-            originalPrice={1500.0}
-            rating={4.7}
-            reviewCount={3210}
-            duration="8 horas"
-            location="Cancún, México"
-          />
-
-          <ExperienceCard
-            id="4"
-            title="Tour Privado pelas Ruínas de Tulum"
-            image="/placeholder.svg?height=400&width=600"
-            price={1450.0}
-            rating={4.6}
-            reviewCount={320}
-            duration="4 horas"
-            location="Tulum, México"
-          />
-
-          <ExperienceCard
-            id="5"
-            title="Mergulho em Cenotes Secretos"
-            image="/placeholder.svg?height=400&width=600"
-            price={1750.0}
-            originalPrice={2000.0}
-            rating={4.9}
-            reviewCount={178}
-            duration="6 horas"
-            location="Riviera Maya, México"
-          />
-
-          <ExperienceCard
-            id="7"
-            title="Tour VIP às Ruínas de Coba e Cenote"
-            image="/placeholder.svg?height=400&width=600"
-            price={1650.0}
-            rating={4.7}
-            reviewCount={890}
-            duration="8 horas"
-            location="Cancún, México"
-          />
+      {/* Botão fixo na parte inferior (apenas mobile) */}
+      {isMobile && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex justify-between items-center z-20">
+          <div>
+            {tourData.originalPrice && (
+              <p className="text-sm text-gray-500 line-through">R$ {tourData.originalPrice.toFixed(2)}</p>
+            )}
+            <div className="flex items-center">
+              <p className="text-2xl font-bold mr-2">R$ {tourData.price.toFixed(2)}</p>
+              <span className="text-sm text-gray-500">por pessoa</span>
+            </div>
+          </div>
+          <Button className="bg-black text-white hover:bg-black/90 px-6 py-6" onClick={handleStartBooking}>
+            Ver disponibilidade
+          </Button>
         </div>
-      </div>
+      )}
 
-      {/* Modais e Drawers */}
-      <PhotoGalleryModal
-        images={tourData.images}
-        isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
-        initialIndex={selectedImage}
-      />
-
-      <DateSelectionDrawer
-        isOpen={isDateDrawerOpen}
-        onClose={() => setIsDateDrawerOpen(false)}
-        onSelect={handleDateSelect}
-        availableDates={tourData.availableDates || []}
-        availableTimes={[
-          { id: "1", time: "08:00", label: "08:00" },
-          { id: "2", time: "09:00", label: "09:00" },
-          { id: "3", time: "10:00", label: "10:00" },
-          { id: "4", time: "13:00", label: "13:00" },
-          { id: "5", time: "14:00", label: "14:00" },
-        ]}
-      />
-
-      <ParticipantsSelectionDrawer
-        isOpen={isParticipantsDrawerOpen}
-        onClose={() => setIsParticipantsDrawerOpen(false)}
-        onSelect={handleParticipantsSelect}
-        initialValues={selectedParticipants}
-      />
-
-      <GuideSelectionDrawer
-        isOpen={isGuideDrawerOpen}
-        onClose={() => setIsGuideDrawerOpen(false)}
-        onSelect={handleGuideSelect}
+      {/* Modal de disponibilidade */}
+      <DisponibilidadModal
+        isOpen={isDisponibilidadOpen}
+        onClose={() => setIsDisponibilidadOpen(false)}
+        onSelect={handleGuideSelection}
         guides={tourData.guides}
+        selectedDate={selectedDate}
+        participants={selectedParticipants}
+        experience={tourData}
       />
     </div>
-  );
+  )
 }
+

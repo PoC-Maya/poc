@@ -99,4 +99,3 @@ export function ExperienceCard({
     </div>
   )
 }
-

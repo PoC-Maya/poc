@@ -703,35 +703,6 @@ import { markAsRead as _markAsRead } from "./chats/markAsRead.js";
 import { sendMessage as _sendMessage } from "./chats/sendMessage.js";
 
 /**
- * @description Adiciona item ao itinerário de uma experiência
- * @category Experiences
- * @inputModel {
- *   experienceId: string,
- *   title: string,
- *   description: string,
- *   duration: number,
- *   order: number
- * }
- * @dbTables experiences(SELECT), itinerary_items(INSERT)
- * @dbProcedures sp_add_itinerary_item
- * @dbRelations experiences.id->itinerary_items.experience_id
- */
-import { addItineraryItem as _addItineraryItem } from "./experiences/addItineraryItem.js";
-
-/**
- * @description Clona uma experiência existente
- * @category Experiences
- * @inputModel {
- *   experienceId: string,
- *   newTitle: string
- * }
- * @dbTables experiences(SELECT,INSERT), itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT  itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT), experience_images(SELECT,INSERT)
- * @dbProcedures sp_clone_experience
- * @dbRelations experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id
- */
-import { cloneExperience as _cloneExperience } from "./experiences/cloneExperience.js";
-
-/**
  * @description Criar uma nova experiência do marketplace (apenas para administradores)
  * @category Experiences
  * @inputModel {
@@ -881,19 +852,6 @@ import { createExperience as _createExperience } from "./experiences/createExper
 import { deleteExperience as _deleteExperience } from "./experiences/deleteExperience.js";
 
 /**
- * @description Exclui item do itinerário
- * @category Experiences
- * @inputModel {
- *   itemId: string,
- *   experienceId: string
- * }
- * @dbTables itinerary_items(SELECT,DELETE), experiences(SELECT)
- * @dbProcedures sp_delete_itinerary_item
- * @dbRelations itinerary_items.experience_id->experiences.id
- */
-import { deleteItineraryItem as _deleteItineraryItem } from "./experiences/deleteItineraryItem.js";
-
-/**
  * @description Obtém detalhes de uma experiência
  * @category Experiences
  * @inputModel {
@@ -930,19 +888,6 @@ import { getExperienceDetails as _getExperienceDetails } from "./experiences/get
 import { listExperiences as _listExperiences } from "./experiences/listExperiences.js";
 
 /**
- * @description Traduz uma experiência para outro idioma
- * @category Experiences
- * @inputModel {
- *   experienceId: string,
- *   targetLanguage: string
- * }
- * @dbTables experiences(SELECT,INSERT), experience_translations(INSERT), itinerary_items(SELECT), itinerary_item_translations(INSERT)
- * @dbProcedures sp_translate_experience
- * @dbRelations experiences.id->experience_translations.experience_id, experiences.id->itinerary_items.experience_id, itinerary_items.id->itinerary_item_translations.item_id
- */
-import { translateExperience as _translateExperience } from "./experiences/translateExperience.js";
-
-/**
  * @description Atualiza uma experiência
  * @category Experiences
  * @inputModel {
@@ -976,54 +921,6 @@ import { updateExperience as _updateExperience } from "./experiences/updateExper
  * @dbRelations experiences.id->experience_status_history.experience_id
  */
 import { updateExperienceStatus as _updateExperienceStatus } from "./experiences/updateExperienceStatus.js";
-
-/**
- * @description Atualiza item do itinerário
- * @category Experiences
- * @inputModel {
- *   itemId: string,
- *   experienceId: string,
- *   title: string,
- *   description: string,
- *   duration: number,
- *   order: number
- * }
- * @dbTables itinerary_items(SELECT,UPDATE), experiences(SELECT)
- * @dbProcedures sp_update_itinerary_item
- * @dbRelations itinerary_items.experience_id->experiences.id
- */
-import { updateItineraryItem as _updateItineraryItem } from "./experiences/updateItineraryItem.js";
-
-/**
- * @description Atualiza preços de uma experiência
- * @category Experiences
- * @inputModel {
- *   experienceId: string,
- *   basePrice: number,
- *   discountPrice: number,
- *   childPrice: number,
- *   groupDiscounts: array,
- *   addons: array
- * }
- * @dbTables experience_pricing(SELECT,UPDATE), experience_addons(DELETE,INSERT), experiences(SELECT)
- * @dbProcedures sp_update_experience_pricing
- * @dbRelations experience_pricing.experience_id->experiences.id, experiences.id->experience_addons.experience_id
- */
-import { updatePricing as _updatePricing } from "./experiences/updatePricing.js";
-
-/**
- * @description Faz upload de imagens para uma experiência
- * @category Experiences
- * @inputModel {
- *   experienceId: string,
- *   images: array,
- *   mainImageIndex: number
- * }
- * @dbTables experiences(SELECT,UPDATE), experience_images(INSERT)
- * @dbProcedures sp_upload_experience_images
- * @dbRelations experiences.id->experience_images.experience_id
- */
-import { uploadExperienceImages as _uploadExperienceImages } from "./experiences/uploadExperienceImages.js";
 
 /**
  * @description Completa o processo de onboarding de um guia
@@ -2497,50 +2394,6 @@ _sendMessage.metadata = {
 
 export const sendMessage = _sendMessage;
 
-_addItineraryItem.metadata = {
-  description: " Adicionar item ao itinerário",
-  category: " experiences",
-  inputModel: {
-    experienceId: "exp_123",
-    title: "Visita ao Museu",
-    description: "Visita guiada ao museu histórico",
-    startTime: "10:00",
-    duration: 90, // minutos
-    orderNum: 2,
-  },
-
-  supabaseInfos: {
-    dbTables: "experiences(SELECT), itinerary_items(INSERT)",
-    dbProcedures: "sp_add_itinerary_item",
-    dbRelations: "experiences.id->itinerary_items.experience_id",
-  },
-};
-
-export const addItineraryItem = _addItineraryItem;
-
-_cloneExperience.metadata = {
-  description: " Clonar experiência existente",
-  category: " experiences",
-  inputModel: {
-    experienceId: "exp_123",
-    newTitle: "Cópia de Experiência Original",
-    customizations: {
-      duration: 5,
-      meetingPoint: "Novo ponto de encontro",
-    },
-  },
-
-  supabaseInfos: {
-    dbTables:
-      "experiences(SELECT,INSERT), itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT  itinerary_items(SELECT,INSERT), experience_pricing(SELECT,INSERT), experience_addons(SELECT,INSERT), experience_images(SELECT,INSERT)",
-    dbProcedures: "sp_clone_experience",
-    dbRelations:
-      "experiences.id->itinerary_items.experience_id, experiences.id->experience_pricing.experience_id, experiences.id->experience_addons.experience_id, experiences.id->experience_images.experience_id",
-  },
-};
-
-export const cloneExperience = _cloneExperience;
-
 _createMarketplaceExperience.metadata = {
   description: " Criar nova experiência",
   category: " experiences",
@@ -2819,7 +2672,14 @@ export const createExperience = _createExperience;
 _deleteExperience.metadata = {
   description: " Excluir experiência",
   category: " experiences",
-  inputModel: { experienceId: "exp_123", reason: "Experiência descontinuada" },
+  inputModel: {
+    // Experience ID to delete
+    experience_id: "301f580d-d70a-44db-84a4-d6a6fd9dca85",
+
+    // Admin only: force delete even if there are bookings
+    // Not applicable for marketplace experiences with enrolled guides
+    force_delete: false,
+  },
 
   supabaseInfos: {
     dbTables:
@@ -2831,20 +2691,6 @@ _deleteExperience.metadata = {
 };
 
 export const deleteExperience = _deleteExperience;
-
-_deleteItineraryItem.metadata = {
-  description: " Remover item do itinerário",
-  category: " experiences",
-  inputModel: { itemId: "item_123" },
-
-  supabaseInfos: {
-    dbTables: "itinerary_items(SELECT,DELETE), experiences(SELECT)",
-    dbProcedures: "sp_delete_itinerary_item",
-    dbRelations: "itinerary_items.experience_id->experiences.id",
-  },
-};
-
-export const deleteItineraryItem = _deleteItineraryItem;
 
 _getExperienceDetails.metadata = {
   description: " Obter detalhes de uma experiência",
@@ -2869,18 +2715,26 @@ _listExperiences.metadata = {
   description: " Listar experiências (com filtros)",
   category: " experiences",
   inputModel: {
-    categoryId: "category_123",
-    locationId: "location_123",
-    minDuration: 2,
-    maxDuration: 6,
-    minPrice: 50,
-    maxPrice: 300,
-    language: "Inglês",
-    date: "2023-06-15",
-    page: 1,
-    limit: 10,
-    sortBy: "price", // 'price', 'duration', 'rating'
-    sortOrder: "asc", // 'asc', 'desc'
+    // Pagination
+    page: 1, // Current page number
+    limit: 10, // Number of items per page
+
+    // Filters
+    search: "boat tour", // Text search in title
+    tag_ids: [
+      // Array of tag IDs to filter by
+      "c258e2f7-f580-48ba-abe8-2221a6e9f4f4", // Cancun (city)
+      "05977ef3-1b67-46c4-9135-37e0b88d9404", // Boat tour (activity)
+    ],
+    min_price: 50, // Minimum adult price
+    max_price: 200, // Maximum adult price
+    participants: 4, // Number of participants
+
+    // Sorting
+    sort_by: "price_asc", // Options: price_asc, price_desc, newest, oldest
+
+    // Location (optional)
+    city_tag_id: "c258e2f7-f580-48ba-abe8-2221a6e9f4f4", // Specific city tag ID
   },
 
   supabaseInfos: {
@@ -2893,33 +2747,6 @@ _listExperiences.metadata = {
 };
 
 export const listExperiences = _listExperiences;
-
-_translateExperience.metadata = {
-  description: " Traduzir experiência para outro idioma",
-  category: " experiences",
-  inputModel: {
-    experienceId: "exp_123",
-    languageCode: "es",
-    translations: {
-      title: "Título en Español",
-      shortDescription: "Breve descripción",
-      fullDescription: "Descripción completa...",
-      servicesIncluded: ["Transporte", "Merienda"],
-      servicesNotIncluded: ["Bebidas alcohólicas"],
-      meetingPoint: "Punto de encuentro",
-    },
-  },
-
-  supabaseInfos: {
-    dbTables:
-      "experiences(SELECT,INSERT), experience_translations(INSERT), itinerary_items(SELECT), itinerary_item_translations(INSERT)",
-    dbProcedures: "sp_translate_experience",
-    dbRelations:
-      "experiences.id->experience_translations.experience_id, experiences.id->itinerary_items.experience_id, itinerary_items.id->itinerary_item_translations.item_id",
-  },
-};
-
-export const translateExperience = _translateExperience;
 
 _updateExperience.metadata = {
   description: " Atualizar experiência existente",
@@ -3023,9 +2850,16 @@ _updateExperienceStatus.metadata = {
   description: " Ativar/desativar experiência",
   category: " experiences",
   inputModel: {
-    experienceId: "exp_123",
-    isActive: true,
-    reason: "Retomando operação após temporada",
+    // Experience ID to update
+    experience_id: "301f580d-d70a-44db-84a4-d6a6fd9dca85",
+
+    // New status
+    // Options: "draft", "in-revision", "published", "reproved"
+    status: "published",
+
+    // Rejection reason (required only if status is "reproved")
+    rejection_reason:
+      "The description is too short and lacks important details about safety measures. Please provide more information about what participants should expect and any safety precautions they should take.",
   },
 
   supabaseInfos: {
@@ -3036,84 +2870,6 @@ _updateExperienceStatus.metadata = {
 };
 
 export const updateExperienceStatus = _updateExperienceStatus;
-
-_updateItineraryItem.metadata = {
-  description: " Atualizar item do itinerário",
-  category: " experiences",
-  inputModel: {
-    itemId: "item_123",
-    title: "Visita ao Museu Atualizada",
-    description: "Visita guiada ao museu histórico com exposição especial",
-    startTime: "10:30",
-    duration: 120, // minutos
-    orderNum: 3,
-  },
-
-  supabaseInfos: {
-    dbTables: "itinerary_items(SELECT,UPDATE), experiences(SELECT)",
-    dbProcedures: "sp_update_itinerary_item",
-    dbRelations: "itinerary_items.experience_id->experiences.id",
-  },
-};
-
-export const updateItineraryItem = _updateItineraryItem;
-
-_updatePricing.metadata = {
-  description: " Atualizar preços da experiência",
-  category: " experiences",
-  inputModel: {
-    experienceId: "exp_123",
-    pricingTiers: [
-      {
-        id: "tier_123", // Se for atualização
-        minParticipants: 1,
-        maxParticipants: 3,
-        adultPrice: 180,
-        teenagerPrice: 120,
-        childPrice: 90,
-      },
-      {
-        minParticipants: 4,
-        maxParticipants: 8,
-        adultPrice: 150,
-        teenagerPrice: 100,
-        childPrice: 75,
-      },
-    ],
-  },
-
-  supabaseInfos: {
-    dbTables:
-      "experience_pricing(SELECT,UPDATE), experience_addons(DELETE,INSERT), experiences(SELECT)",
-    dbProcedures: "sp_update_experience_pricing",
-    dbRelations:
-      "experience_pricing.experience_id->experiences.id, experiences.id->experience_addons.experience_id",
-  },
-};
-
-export const updatePricing = _updatePricing;
-
-_uploadExperienceImages.metadata = {
-  description: " Enviar imagens da experiência",
-  category: " experiences",
-  inputModel: {
-    experienceId: "exp_123",
-    coverImage: [File], // Arquivo de upload para capa
-    galleryImages: [File, File, File], // Arquivos de upload para galeria
-    descriptions: {
-      "image1.jpg": "Descrição da imagem 1",
-      "image2.jpg": "Descrição da imagem 2",
-    },
-  },
-
-  supabaseInfos: {
-    dbTables: "experiences(SELECT,UPDATE), experience_images(INSERT)",
-    dbProcedures: "sp_upload_experience_images",
-    dbRelations: "experiences.id->experience_images.experience_id",
-  },
-};
-
-export const uploadExperienceImages = _uploadExperienceImages;
 
 _completeOnboarding.metadata = {
   description: " Finalizar processo de onboarding",
